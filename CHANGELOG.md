@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.4+melior1.0.0] - 2019-01-13
+### Fixed
+- `sliding_window` removed in order to have direct compatibility with Transformers models.
+- `metric_criteria` and `save_n_best_epochs` parameters added. These allow to save the best model. 
+
 ## [0.15.4] - 2019-12-31
 ### Fixed
 - Fixed bug in `QuestonAnsweringModel` when using `evaluate_during_training`.
