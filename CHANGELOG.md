@@ -78,6 +78,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.15.5] - 2020-01-05
 ### Added
 - Using `evaluate_during_training` now generates `training_progress_scores.csv` (which contains the evaluation results of all checkpoints) in the output directory.
+## [0.15.4+melior1.0.0] - 2019-01-13
+### Fixed
+- `sliding_window` removed in order to have direct compatibility with Transformers models.
+- `metric_criteria` and `save_n_best_epochs` parameters added. These allow to save the best model. 
 
 ## [0.15.4] - 2019-12-31
 ### Fixed
