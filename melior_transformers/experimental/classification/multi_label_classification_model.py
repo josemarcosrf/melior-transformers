@@ -2,8 +2,8 @@ import torch
 
 from multiprocessing import cpu_count
 
-from simpletransformers.classification import ClassificationModel
-from simpletransformers.custom_models.models import (BertForMultiLabelSequenceClassification, 
+from melior_transformers.classification import ClassificationModel
+from melior_transformers.custom_models.models import (BertForMultiLabelSequenceClassification, 
                                                     RobertaForMultiLabelSequenceClassification, 
                                                     XLNetForMultiLabelSequenceClassification,
                                                     XLMForMultiLabelSequenceClassification,

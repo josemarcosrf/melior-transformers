@@ -56,7 +56,7 @@ from transformers import (
 )
 from tqdm.auto import tqdm, trange
 
-from simpletransformers.classification.classification_utils import (
+from melior_transformers.classification.classification_utils import (
     InputExample,
     convert_examples_to_features,
     delete_worst_models,
@@ -90,7 +90,7 @@ from transformers import (
 )
 
 
-from simpletransformers.config.global_args import global_args
+from melior_transformers.config.global_args import global_args
 
 import wandb
 
@@ -120,28 +120,28 @@ class ClassificationModel:
         """
 
         if args is not None and args.get("sliding_window", False):
-                from simpletransformers.classification.transformer_models.bert_model import (
+                from melior_transformers.classification.transformer_models.bert_model import (
                     BertForSequenceClassification,
                 )
-                from simpletransformers.classification.transformer_models.roberta_model import (
+                from melior_transformers.classification.transformer_models.roberta_model import (
                     RobertaForSequenceClassification,
                 )
-                from simpletransformers.classification.transformer_models.xlm_model import (
+                from melior_transformers.classification.transformer_models.xlm_model import (
                     XLMForSequenceClassification,
                 )
-                from simpletransformers.classification.transformer_models.xlnet_model import (
+                from melior_transformers.classification.transformer_models.xlnet_model import (
                     XLNetForSequenceClassification,
                 )
-                from simpletransformers.classification.transformer_models.distilbert_model import (
+                from melior_transformers.classification.transformer_models.distilbert_model import (
                     DistilBertForSequenceClassification,
                 )
-                from simpletransformers.classification.transformer_models.albert_model import (
+                from melior_transformers.classification.transformer_models.albert_model import (
                     AlbertForSequenceClassification,
                 )
-                from simpletransformers.classification.transformer_models.camembert_model import (
+                from melior_transformers.classification.transformer_models.camembert_model import (
                     CamembertForSequenceClassification,
                 )
-                from simpletransformers.classification.transformer_models.xlm_roberta_model import (
+                from melior_transformers.classification.transformer_models.xlm_roberta_model import (
                     XLMRobertaForSequenceClassification,
                 )
         else:

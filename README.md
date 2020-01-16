@@ -1,8 +1,29 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Downloads](https://pepy.tech/badge/simpletransformers)](https://pepy.tech/project/simpletransformers)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+<!-- [![Downloads](https://pepy.tech/badge/simpletransformers)](https://pepy.tech/project/simpletransformers) -->
 
 # Simple Transformers
 
-This library is based on the [Transformers](https://github.com/huggingface/transformers) library by HuggingFace. Simple Transformers lets you quickly train and evaluate Transformer models. Only 3 lines of code are needed to initialize a model, train the model, and evaluate a model. Currently supports Sequence Classification, Token Classification (NER), and Question Answering.
+This library is based on
+[simpleTransformers](https://github.com/ThilinaRajapakse/simpletransformers)
+which in turn is based on the
+[Transformers](https://github.com/huggingface/transformers) library by HuggingFace.
+
+We aim to expand the capabilities of the Transformers library so it can be used
+beyond classification. Providing a unified interface to using Transformers as
+a tool for _Semantic Search_, _Spellcheck correction_ or _Entity Extraction_ in
+a easy and extensible way.
+
+In addition we want to make it productionready, well tested
+and accesible via different interfaces for containarized and cloud environments.
+
+
+-------------------------
+
+The original simpleTransformers README follows:
+
+Simple Transformers lets you quickly train and evaluate Transformer models.
+Only 3 lines of code are needed to initialize a model, train the model, and evaluate a model.
+Currently supports Sequence Classification, Token Classification (NER), and Question Answering.
 
 # Table of contents
 
@@ -42,18 +63,18 @@ This library is based on the [Transformers](https://github.com/huggingface/trans
 ### With Conda
 
 1. Install Anaconda or Miniconda Package Manager from [here](https://www.anaconda.com/distribution/)
-2. Create a new virtual environment and install packages.  
-`conda create -n transformers python pandas tqdm`  
-`conda activate transformers`  
-If using cuda:  
-&nbsp;&nbsp;&nbsp;&nbsp;`conda install pytorch cudatoolkit=10.1 -c pytorch`  
-else:  
-&nbsp;&nbsp;&nbsp;&nbsp;`conda install pytorch cpuonly -c pytorch`  
+2. Create a new virtual environment and install packages.
+`conda create -n transformers python pandas tqdm`
+`conda activate transformers`
+If using cuda:
+&nbsp;&nbsp;&nbsp;&nbsp;`conda install pytorch cudatoolkit=10.1 -c pytorch`
+else:
+&nbsp;&nbsp;&nbsp;&nbsp;`conda install pytorch cpuonly -c pytorch`
 
 3. Install Apex if you are using fp16 training. Please follow the instructions [here](https://github.com/NVIDIA/apex). (Installing Apex from pip has caused issues for several people.)
 
-4. Install simpletransformers.  
-`pip install simpletransformers`  
+4. Install simpletransformers.
+`pip install simpletransformers`
 
 ## Usage
 
@@ -154,7 +175,7 @@ eval_data = [['Example eval sentence belonging to class 1', 1], ['Example eval s
 eval_df = pd.DataFrame(eval_data)
 
 # Create a ClassificationModel
-model = ClassificationModel('bert', 'bert-base-cased', num_labels=3, args={'reprocess_input_data': True, 'overwrite_output_dir': True}) 
+model = ClassificationModel('bert', 'bert-base-cased', num_labels=3, args={'reprocess_input_data': True, 'overwrite_output_dir': True})
 # You can set class weights by using the optional weight argument
 
 # Train the model
@@ -277,7 +298,7 @@ print(raw_outputs)
 
 #### ClassificationModel
 
-`class simpletransformers.classification.ClassificationModel (model_type, model_name, args=None, use_cuda=True)`  
+`class simpletransformers.classification.ClassificationModel (model_type, model_name, args=None, use_cuda=True)`
 This class  is used for Text Classification tasks.
 
 `Class attributes`
@@ -296,12 +317,12 @@ This class  is used for Text Classification tasks.
 * `args`: (optional) python dict - A dictionary containing any settings that should be overwritten from the default values.
 * `use_cuda`: (optional) bool - Default = True. Flag used to indicate whether CUDA should be used.
 
-`class methods`  
+`class methods`
 **`train_model(self, train_df, output_dir=None, show_running_loss=True, args=None, eval_df=None)`**
 
 Trains the model using 'train_df'
 
-Args:  
+Args:
 * `train_df`: Pandas Dataframe containing at least two columns. If the Dataframe has a header, it should contain a 'text' and a 'labels' column. If no header is present, the Dataframe should contain at least two columns, with the first column containing the text, and the second column containing the label. The model will be trained on this Dataframe.
 
 * `output_dir` (optional): The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
@@ -312,26 +333,26 @@ Args:
 
 * `eval_df` (optional): A DataFrame against which evaluation will be performed when `evaluate_during_training` is enabled. Is required if `evaluate_during_training` is enabled.
 
-Returns:  
+Returns:
 * None
 
 **`eval_model(self, eval_df, output_dir=None, verbose=False)`**
 
 Evaluates the model on eval_df. Saves results to output_dir.
 
-Args:  
+Args:
 * eval_df: Pandas Dataframe containing at least two columns. If the Dataframe has a header, it should contain a 'text' and a 'labels' column. If no header is present, the Dataframe should contain at least two columns, with the first column containing the text, and the second column containing the label. The model will be evaluated on this Dataframe.
 
-* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.  
+* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
 
-* verbose: If verbose, results will be printed to the console on completion of evaluation.  
+* verbose: If verbose, results will be printed to the console on completion of evaluation.
 
-Returns:  
-* result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)  
+Returns:
+* result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)
 
->model_outputs: List of model outputs for each row in eval_df  
+>model_outputs: List of model outputs for each row in eval_df
 
-* wrong_preds: List of InputExample objects corresponding to each incorrect prediction by the model  
+* wrong_preds: List of InputExample objects corresponding to each incorrect prediction by the model
 
 **`predict(self, to_predict)`**
 
@@ -341,7 +362,7 @@ Args:
 * to_predict: A python list of text (str) to be sent to the model for prediction.
 
 Returns:
-* preds: A python list of the predictions (0 or 1) for each text.  
+* preds: A python list of the predictions (0 or 1) for each text.
 * model_outputs: A python list of the raw model outputs for each text.
 
 
@@ -365,16 +386,16 @@ Converts a list of InputExample objects to a TensorDataset containing InputFeatu
 Computes the evaluation metrics for the model predictions.
 
 Args:
-* preds: Model predictions  
+* preds: Model predictions
 
-* labels: Ground truth labels  
+* labels: Ground truth labels
 
-* eval_examples: List of examples on which evaluation was performed  
+* eval_examples: List of examples on which evaluation was performed
 
 Returns:
-* result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)  
+* result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)
 
-* wrong: List of InputExample objects corresponding to each incorrect prediction by the model  
+* wrong: List of InputExample objects corresponding to each incorrect prediction by the model
 
 ---
 
@@ -436,7 +457,7 @@ print(predictions)
 
 #### NERModel
 
-`class simpletransformers.ner.ner_model.NERModel (model_type, model_name, labels=None, args=None, use_cuda=True)`  
+`class simpletransformers.ner.ner_model.NERModel (model_type, model_name, labels=None, args=None, use_cuda=True)`
 This class  is used for Named Entity Recognition.
 
 `Class attributes`
@@ -454,14 +475,14 @@ This class  is used for Named Entity Recognition.
 * `args`: (optional) python dict - A dictionary containing any settings that should be overwritten from the default values.
 * `use_cuda`: (optional) bool - Default = True. Flag used to indicate whether CUDA should be used.
 
-`class methods`  
+`class methods`
 **`train_model(self, train_data, output_dir=None, args=None, eval_df=None)`**
 
 Trains the model using 'train_data'
 
-Args:  
+Args:
 * train_data: train_data should be the path to a .txt file containing the training data OR a pandas DataFrame with 3 columns.
-If a text file is used the data should be in the CoNLL format. i.e. One word per line, with sentences seperated by an empty line. 
+If a text file is used the data should be in the CoNLL format. i.e. One word per line, with sentences seperated by an empty line.
 The first word of the line should be a word, and the last should be a Name Entity Tag.
 If a DataFrame is given, each sentence should be split into words, with each word assigned a tag, and with all words from the same sentence given the same sentence_id.
 
@@ -474,21 +495,21 @@ If a DataFrame is given, each sentence should be split into words, with each wor
 * eval_df (optional): A DataFrame against which evaluation will be performed when `evaluate_during_training` is enabled. Is required if `evaluate_during_training` is enabled.
 
 
-Returns:  
+Returns:
 * None
 
 **`eval_model(self, eval_data, output_dir=None, verbose=True)`**
 
 Evaluates the model on eval_data. Saves results to output_dir.
 
-Args:  
+Args:
 * eval_data: Pandas Dataframe containing at least two columns. If the Dataframe has a header, it should contain a 'text' and a 'labels' column. If no header is present, the Dataframe should contain at least two columns, with the first column containing the text, and the second column containing the label. The model will be evaluated on this Dataframe.
 
-* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.  
+* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
 
-* verbose: If verbose, results will be printed to the console on completion of evaluation.  
+* verbose: If verbose, results will be printed to the console on completion of evaluation.
 
-Returns:  
+Returns:
 * result: Dictionary containing evaluation results. (eval_loss, precision, recall, f1_score)
 
 * model_outputs: List of raw model outputs
@@ -546,8 +567,8 @@ Each such dictionary contains two attributes, the `"context"` and `"qas"`.
 
 Questions and answers are represented as dictionaries. Each dictionary in `qas` has the following format.
 * `id`: (string) A unique ID for the question. Should be unique across the entire dataset.
-* `question`: (string) A question. 
-* `is_impossible`: (bool) Indicates whether the question can be answered correctly from the context. 
+* `question`: (string) A question.
+* `is_impossible`: (bool) Indicates whether the question can be answered correctly from the context.
 * `answers`: (list) The list of correct answers to the question.
 
 A single answer is represented by a dictionary with the following attributes.
@@ -645,7 +666,7 @@ print(model.predict(to_predict))
 
 ### QuestionAnsweringModel
 
-`class simpletransformers.question_answering.QuestionAnsweringModel (model_type, model_name, args=None, use_cuda=True)`  
+`class simpletransformers.question_answering.QuestionAnsweringModel (model_type, model_name, args=None, use_cuda=True)`
 This class  is used for Question Answering tasks.
 
 `Class attributes`
@@ -662,12 +683,12 @@ This class  is used for Question Answering tasks.
 * `args`: (optional) python dict - A dictionary containing any settings that should be overwritten from the default values.
 * `use_cuda`: (optional) bool - Default = True. Flag used to indicate whether CUDA should be used.
 
-`class methods`  
+`class methods`
 **`train_model(self, train_df, output_dir=None, args=None, eval_df=None)`**
 
 Trains the model using 'train_file'
 
-Args:  
+Args:
 * train_df: ath to JSON file containing training data. The model will be trained on this file.
             output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
 
@@ -679,24 +700,24 @@ Args:
 
 * eval_file (optional): Path to JSON file containing evaluation data against which evaluation will be performed when evaluate_during_training is enabled. Is required if evaluate_during_training is enabled.
 
-Returns:  
+Returns:
 * None
 
 **`eval_model(self, eval_df, output_dir=None, verbose=False)`**
 
 Evaluates the model on eval_file. Saves results to output_dir.
 
-Args:  
+Args:
 * eval_file: Path to JSON file containing evaluation data. The model will be evaluated on this file.
 
-* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.  
+* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
 
-* verbose: If verbose, results will be printed to the console on completion of evaluation.  
+* verbose: If verbose, results will be printed to the console on completion of evaluation.
 
-Returns:  
+Returns:
 * result: Dictionary containing evaluation results. (correct, similar, incorrect)
 
-* text: A dictionary containing the 3 dictionaries correct_text, similar_text (the predicted answer is a substring of the correct answer or vise versa), incorrect_text. 
+* text: A dictionary containing the 3 dictionaries correct_text, similar_text (the predicted answer is a substring of the correct answer or vise versa), incorrect_text.
 
 
 **`predict(self, to_predict)`**
@@ -951,7 +972,7 @@ self.args = {
 
   'overwrite_output_dir': False,
   'reprocess_input_data': False,
-  
+
   'process_count': cpu_count() - 2 if cpu_count() > 2 else 1
   'n_gpu': 1,
   'silent': False,

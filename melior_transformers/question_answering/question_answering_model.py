@@ -35,7 +35,7 @@ from transformers import (
     AlbertConfig, AlbertForQuestionAnswering, AlbertTokenizer
 )
 
-from simpletransformers.question_answering.question_answering_utils import (
+from melior_transformers.question_answering.question_answering_utils import (
     get_examples,
     convert_examples_to_features,
     RawResult,
@@ -47,7 +47,7 @@ from simpletransformers.question_answering.question_answering_utils import (
     get_best_predictions,
     get_best_predictions_extended
 )
-from simpletransformers.config.global_args import global_args
+from melior_transformers.config.global_args import global_args
 
 import wandb
 

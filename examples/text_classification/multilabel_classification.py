@@ -1,4 +1,4 @@
-from simpletransformers.classification import MultiLabelClassificationModel
+from melior_transformers.classification import MultiLabelClassificationModel
 import pandas as pd
 
 

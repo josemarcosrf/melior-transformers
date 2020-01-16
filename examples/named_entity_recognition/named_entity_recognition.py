@@ -1,4 +1,4 @@
-from simpletransformers.ner import NERModel
+from melior_transformers.ner import NERModel
 import pandas as pd
 
 

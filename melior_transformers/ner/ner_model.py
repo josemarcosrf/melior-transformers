@@ -30,9 +30,9 @@ from transformers import DistilBertConfig, DistilBertForTokenClassification, Dis
 from transformers import RobertaConfig, RobertaForTokenClassification, RobertaTokenizer
 from transformers import XLMRobertaConfig, XLMRobertaForTokenClassification, XLMRobertaTokenizer
 
-from simpletransformers.ner.ner_utils import InputExample, convert_examples_to_features, get_labels, read_examples_from_file, get_examples_from_df
+from melior_transformers.ner.ner_utils import InputExample, convert_examples_to_features, get_labels, read_examples_from_file, get_examples_from_df
 from transformers import CamembertConfig, CamembertForTokenClassification, CamembertTokenizer
-from simpletransformers.config.global_args import global_args
+from melior_transformers.config.global_args import global_args
 
 import wandb
 

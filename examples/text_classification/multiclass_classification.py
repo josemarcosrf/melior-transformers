@@ -1,4 +1,4 @@
-from simpletransformers.classification import ClassificationModel
+from melior_transformers.classification import ClassificationModel
 import pandas as pd
 
 

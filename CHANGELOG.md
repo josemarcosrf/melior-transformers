@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.18.2+melior1.1.0] - 2019-01-16
 ### Added
 - `metric_criteria` and `save_n_best_epochs` parameters added. These allow to save the best model.
+- Renamed library to `meliorTransformers`
+- `README` and versioning file update
+- Added `.drone.yml` placeholder
 
 ## [0.18.2] - 2020-01-15
 ### Added
@@ -85,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.15.4+melior1.0.0] - 2019-01-13
 ### Fixed
 - `sliding_window` removed in order to have direct compatibility with Transformers models.
-- `metric_criteria` and `save_n_best_epochs` parameters added. These allow to save the best model. 
+- `metric_criteria` and `save_n_best_epochs` parameters added. These allow to save the best model.
 
 ## [0.15.4] - 2019-12-31
 ### Fixed
