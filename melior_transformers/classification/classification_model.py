@@ -13,6 +13,10 @@ import warnings
 from multiprocessing import cpu_count
 
 import numpy as np
+import pandas as pd
+
+from scipy.stats import pearsonr, mode
+
 import torch
 from scipy.stats import mode, pearsonr
 from sklearn.metrics import (
@@ -27,9 +31,32 @@ from sklearn.metrics import (
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
+
+from transformers import AdamW, get_linear_schedule_with_warmup
+from transformers import (
+    WEIGHTS_NAME,
+    BertConfig,
+    BertTokenizer,
+    XLNetConfig,
+    XLNetTokenizer,
+    XLMConfig,
+    XLMTokenizer,
+    RobertaConfig,
+    RobertaTokenizer,
+    DistilBertConfig,
+    DistilBertTokenizer,
+    AlbertConfig,
+    AlbertTokenizer,
+    CamembertConfig,
+    CamembertTokenizer,
+    XLMRobertaConfig,
+    XLMRobertaTokenizer,
+    get_linear_schedule_with_warmup,
+)
 from tqdm.auto import tqdm, trange
 
-from simpletransformers.classification.classification_utils import (
+from melior_transformers.classification.classification_utils import (
     InputExample,
     convert_examples_to_features,
     delete_worst_models,
@@ -62,6 +89,12 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
+
+from melior_transformers.config.global_args import global_args
+
+import wandb
+
+
 class ClassificationModel:
     def __init__(
         self,
@@ -86,6 +119,43 @@ class ClassificationModel:
             cuda_device (optional): Specific GPU that should be used. Will use the first available GPU by default.
         """
 
+        if args is not None and args.get("sliding_window", False):
+                from melior_transformers.classification.transformer_models.bert_model import (
+                    BertForSequenceClassification,
+                )
+                from melior_transformers.classification.transformer_models.roberta_model import (
+                    RobertaForSequenceClassification,
+                )
+                from melior_transformers.classification.transformer_models.xlm_model import (
+                    XLMForSequenceClassification,
+                )
+                from melior_transformers.classification.transformer_models.xlnet_model import (
+                    XLNetForSequenceClassification,
+                )
+                from melior_transformers.classification.transformer_models.distilbert_model import (
+                    DistilBertForSequenceClassification,
+                )
+                from melior_transformers.classification.transformer_models.albert_model import (
+                    AlbertForSequenceClassification,
+                )
+                from melior_transformers.classification.transformer_models.camembert_model import (
+                    CamembertForSequenceClassification,
+                )
+                from melior_transformers.classification.transformer_models.xlm_roberta_model import (
+                    XLMRobertaForSequenceClassification,
+                )
+        else:
+            from transformers import (
+                AlbertForSequenceClassification,
+                BertForSequenceClassification,
+                CamembertForSequenceClassification,
+                DistilBertForSequenceClassification,
+                RobertaForSequenceClassification,
+                XLMForSequenceClassification,
+                XLNetForSequenceClassification,
+                XLMRobertaForSequenceClassification,
+            )
+
         MODEL_CLASSES = {
             "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
             "xlnet": (XLNetConfig, XLNetForSequenceClassification, XLNetTokenizer),
@@ -105,6 +175,11 @@ class ClassificationModel:
                 CamembertConfig,
                 CamembertForSequenceClassification,
                 CamembertTokenizer,
+            ),
+            "xlmroberta": (
+                XLMRobertaConfig,
+                XLMRobertaForSequenceClassification,
+                XLMRobertaTokenizer,
             ),
         }
 
@@ -143,38 +218,9 @@ class ClassificationModel:
 
         self.results = {}
 
-        self.args = {
-            "output_dir": "outputs/",
-            "cache_dir": "cache_dir/",
-            "fp16": True,
-            "fp16_opt_level": "O1",
-            "max_seq_length": 128,
-            "train_batch_size": 8,
-            "gradient_accumulation_steps": 1,
-            "eval_batch_size": 8,
-            "num_train_epochs": 1,
-            "weight_decay": 0,
-            "learning_rate": 4e-5,
-            "adam_epsilon": 1e-8,
-            "warmup_ratio": 0.06,
-            "warmup_steps": 0,
-            "max_grad_norm": 1.0,
-            "do_lower_case": False,
-            "logging_steps": 50,
-            "save_steps": 2000,
-            "evaluate_during_training": False,  # Only evaluate when single GPU otherwise metrics may not average well
-            "evaluate_during_training_steps": 2000,
-            "tensorboard_dir": None,
-            "overwrite_output_dir": False,
-            "reprocess_input_data": False,
-            "process_count": cpu_count() - 2 if cpu_count() > 2 else 1,
-            "n_gpu": 1,
-            "use_multiprocessing": True,
-            "silent": False,
-            # Melior paramas
-            "metric_criteria": "f1",  # Could be f1, acc, precision or mcc
-            "save_n_best_epochs": 1,  # Save just the N best models
-        }
+        self.args = {}
+
+        self.args.update(global_args)
 
         if not use_cuda:
             self.args["fp16"] = False
@@ -189,9 +235,9 @@ class ClassificationModel:
         self.args["model_name"] = model_name
         self.args["model_type"] = model_type
 
-        if model_type == "camembert":
+        if model_type in ["camembert", "xlmroberta"]:
             warnings.warn(
-                "use_multiprocessing automatically disabled as CamemBERT fails when using multiprocessing for feature conversion."
+                f"use_multiprocessing automatically disabled as {model_type} fails when using multiprocessing for feature conversion."
             )
             self.args["use_multiprocessing"] = False
 
@@ -258,7 +304,17 @@ class ClassificationModel:
                     zip(train_df["text"], train_df["labels"])
                 )
             ]
+        elif "text_a" in train_df.columns and "text_b" in train_df.columns:
+            train_examples = [
+                InputExample(i, text_a, text_b, label)
+                for i, (text_a, text_b, label) in enumerate(
+                    zip(train_df["text_a"], train_df["text_b"], train_df["labels"])
+                )
+            ]
         else:
+            warnings.warn(
+                "Dataframe headers not specified. Falling back to using column 0 as text and column 1 as labels."
+            )
             train_examples = [
                 InputExample(i, text, None, label)
                 for i, (text, label) in enumerate(
@@ -274,6 +330,7 @@ class ClassificationModel:
         global_step, tr_loss = self.train(
             train_dataset,
             output_dir,
+            multi_label=multi_label,
             show_running_loss=show_running_loss,
             eval_df=eval_df,
             **kwargs,
@@ -293,8 +350,20 @@ class ClassificationModel:
 
         torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
 
+        print(
+            "Training of {} model complete. Saved to {}.".format(
+                self.args["model_type"], output_dir
+            )
+        )
+
     def train(
-        self, train_dataset, output_dir, show_running_loss=True, eval_df=None, **kwargs
+        self,
+        train_dataset,
+        output_dir,
+        multi_label=False,
+        show_running_loss=True,
+        eval_df=None,
+        **kwargs,
     ):
         """
         Trains the model on train_dataset.
@@ -375,6 +444,56 @@ class ClassificationModel:
             int(args["num_train_epochs"]), desc="Epoch", disable=args["silent"]
         )
         epoch_number = 0
+        if args["evaluate_during_training"]:
+            extra_metrics = {key: [] for key in kwargs}
+            if multi_label:
+                training_progress_scores = {
+                    "global_step": [],
+                    "LRAP": [],
+                    "train_loss": [],
+                    "eval_loss": [],
+                    **extra_metrics,
+                }
+            else:
+                if self.model.num_labels == 2:
+                    training_progress_scores = {
+                        "global_step": [],
+                        "tp": [],
+                        "tn": [],
+                        "fp": [],
+                        "fn": [],
+                        "mcc": [],
+                        "train_loss": [],
+                        "eval_loss": [],
+                        "acc": [],
+                        "precision": [],
+                        "f1": [],
+                        **extra_metrics,
+                    }
+                elif self.model.num_labels == 1:
+                    training_progress_scores = {
+                        "global_step": [],
+                        "train_loss": [],
+                        "eval_loss": [],
+                        **extra_metrics,
+                    }
+                else:
+                    training_progress_scores = {
+                        "global_step": [],
+                        "mcc": [],
+                        "train_loss": [],
+                        "eval_loss": [],
+                        "acc": [],
+                        "precision": [],
+                        "f1": [],
+                        **extra_metrics,
+                    }
+
+        if args["wandb_project"]:
+            wandb.init(
+                project=args["wandb_project"], config={**args}, **args["wandb_kwargs"]
+            )
+            wandb.watch(self.model)
 
         model.train()
         for _ in train_iterator:
@@ -392,6 +511,8 @@ class ClassificationModel:
                     loss = (
                         loss.mean()
                     )  # mean() to average on multi-gpu parallel training
+
+                current_loss = loss.item()
 
                 if show_running_loss:
                     print("\rRunning loss: %f" % loss, end="")
@@ -430,6 +551,14 @@ class ClassificationModel:
                             global_step,
                         )
                         logging_loss = tr_loss
+                        if args["wandb_project"]:
+                            wandb.log(
+                                {
+                                    "Training loss": current_loss,
+                                    "lr": scheduler.get_lr()[0],
+                                    "global_step": global_step,
+                                }
+                            )
 
                     if args["save_steps"] > 0 and global_step % args["save_steps"] == 0:
                         # Save model checkpoint
@@ -465,11 +594,12 @@ class ClassificationModel:
                         if not os.path.exists(output_dir_current):
                             os.makedirs(output_dir_current)
 
-                        model_to_save = (
-                            model.module if hasattr(model, "module") else model
-                        )
-                        model_to_save.save_pretrained(output_dir_current)
-                        self.tokenizer.save_pretrained(output_dir_current)
+                        if args["save_eval_checkpoints"]:
+                            model_to_save = (
+                                model.module if hasattr(model, "module") else model
+                            )
+                            model_to_save.save_pretrained(output_dir_current)
+                            self.tokenizer.save_pretrained(output_dir_current)
 
                         output_eval_file = os.path.join(
                             output_dir_current, "eval_results.txt"
@@ -478,17 +608,33 @@ class ClassificationModel:
                             for key in sorted(results.keys()):
                                 writer.write("{} = {}\n".format(key, str(results[key])))
 
+                        training_progress_scores["global_step"].append(global_step)
+                        training_progress_scores["train_loss"].append(current_loss)
+                        for key in results:
+                            training_progress_scores[key].append(results[key])
+                        report = pd.DataFrame(training_progress_scores)
+                        report.to_csv(
+                            args["output_dir"] + "training_progress_scores.csv",
+                            index=False,
+                        )
+
+                        if args["wandb_project"]:
+                            wandb.log(self._get_last_metrics(training_progress_scores))
+
             epoch_number += 1
             output_dir_current = os.path.join(
-                output_dir, "epoch-{}".format(epoch_number)
+                output_dir, "checkpoint-{}-epoch-{}".format(global_step, epoch_number)
             )
 
-            if not os.path.exists(output_dir_current):
+            if (
+                args["save_model_every_epoch"] or args["evaluate_during_training"]
+            ) and not os.path.exists(output_dir_current):
                 os.makedirs(output_dir_current)
 
-            model_to_save = model.module if hasattr(model, "module") else model
-            model_to_save.save_pretrained(output_dir_current)
-            self.tokenizer.save_pretrained(output_dir_current)
+            if args["save_model_every_epoch"]:
+                model_to_save = model.module if hasattr(model, "module") else model
+                model_to_save.save_pretrained(output_dir_current)
+                self.tokenizer.save_pretrained(output_dir_current)
 
             if args["evaluate_during_training"]:
                 results, _, _ = self.eval_model(eval_df, verbose=True, **kwargs)
@@ -502,6 +648,19 @@ class ClassificationModel:
                 update_results_file(results, results_path, output_dir_current)
                 if args["save_n_best_epochs"] != 0:
                     delete_worst_models(args, results_path)
+
+                training_progress_scores["global_step"].append(global_step)
+                training_progress_scores["train_loss"].append(current_loss)
+                # import ipdb
+
+                # ipdb.set_trace()
+
+                for key in results:
+                    training_progress_scores[key].append(results[key])
+                report = pd.DataFrame(training_progress_scores)
+                report.to_csv(
+                    args["output_dir"] + "training_progress_scores.csv", index=False
+                )
 
         return global_step, tr_loss / global_step
 
@@ -562,6 +721,28 @@ class ClassificationModel:
                     zip(eval_df["text"], eval_df["labels"])
                 )
             ]
+        elif "text_a" in eval_df.columns and "text_b" in eval_df.columns:
+            eval_examples = [
+                InputExample(i, text_a, text_b, label)
+                for i, (text_a, text_b, label) in enumerate(
+                    zip(eval_df["text_a"], eval_df["text_b"], eval_df["labels"])
+                )
+            ]
+        else:
+            warnings.warn(
+                "Dataframe headers not specified. Falling back to using column 0 as text and column 1 as labels."
+            )
+            eval_examples = [
+                InputExample(i, text, None, label)
+                for i, (text, label) in enumerate(
+                    zip(eval_df.iloc[:, 0], eval_df.iloc[:, 1])
+                )
+            ]
+
+        if args["sliding_window"]:
+            eval_dataset, window_counts = self.load_and_cache_examples(
+                eval_examples, evaluate=True
+            )
         else:
             eval_examples = [
                 InputExample(i, text, None, label)
@@ -611,7 +792,39 @@ class ClassificationModel:
 
         eval_loss = eval_loss / nb_eval_steps
 
-        model_outputs = preds
+        if args["sliding_window"]:
+            count = 0
+            window_ranges = []
+            for n_windows in window_counts:
+                window_ranges.append([count, count + n_windows])
+                count += n_windows
+
+            preds = [
+                preds[window_range[0] : window_range[1]]
+                for window_range in window_ranges
+            ]
+            out_label_ids = [
+                out_label_ids[i]
+                for i in range(len(out_label_ids))
+                if i in [window[0] for window in window_ranges]
+            ]
+
+            model_outputs = preds
+
+            preds = [np.argmax(pred, axis=1)[0] for pred in preds]
+            final_preds = []
+            for pred_row in preds:
+                mode_pred, counts = mode(pred_row)
+                if len(counts) > 1 and counts[0] == counts[1]:
+                    final_preds.append(args["tie_value"])
+                else:
+                    final_preds.append(mode_pred[0])
+            preds = np.array(final_preds)
+        elif not multi_label and args["regression"] == True:
+            preds = np.squeeze(preds)
+            model_outputs = preds
+        else:
+            model_outputs = preds
 
         if not multi_label:
             preds = np.argmax(preds, axis=1)
@@ -641,8 +854,12 @@ class ClassificationModel:
         process_count = self.args["process_count"]
 
         tokenizer = self.tokenizer
-        output_mode = "classification"
         args = self.args
+
+        if not multi_label and args["regression"]:
+            output_mode = "regression"
+        else:
+            output_mode = "classification"
 
         if not os.path.isdir(self.args["cache_dir"]):
             os.mkdir(self.args["cache_dir"])
@@ -659,15 +876,14 @@ class ClassificationModel:
             ),
         )
 
-        if (
-            os.path.exists(cached_features_file)
-            and not args["reprocess_input_data"]
-            and not no_cache
+        if os.path.exists(cached_features_file) and (
+            (not args["reprocess_input_data"] and not no_cache)
+            or (mode == "dev" and args["use_cached_eval_features"])
         ):
             features = torch.load(cached_features_file)
             print(f"Features loaded from cache at {cached_features_file}")
         else:
-            print(f"Converting to features started.")
+            print(f"Converting to features started. Cache is not used.")
             features = convert_examples_to_features(
                 examples,
                 args["max_seq_length"],
@@ -748,6 +964,8 @@ class ClassificationModel:
         if multi_label:
             label_ranking_score = label_ranking_average_precision_score(labels, preds)
             return {**{"LRAP": label_ranking_score}, **extra_metrics}, wrong
+        elif self.args["regression"]:
+            return {**extra_metrics}, wrong
 
         mcc = matthews_corrcoef(labels, preds)
         acc = accuracy_score(labels, preds)
@@ -756,20 +974,17 @@ class ClassificationModel:
         )
         f1 = f1_score(labels, preds, labels=list(set(preds)), average="weighted")
 
+        extra_metrics = {
+            "acc": acc,
+            "precision": precision,
+            "f1": f1,
+        }
+
         if self.model.num_labels == 2:
             tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
             return (
                 {
-                    **{
-                        "acc": acc,
-                        "precision": precision,
-                        "f1": f1,
-                        "mcc": mcc,
-                        "tp": tp,
-                        "tn": tn,
-                        "fp": fp,
-                        "fn": fn,
-                    },
+                    **{"mcc": mcc, "tp": tp, "tn": tn, "fp": fp, "fn": fn,},
                     **extra_metrics,
                 },
                 wrong,
@@ -778,7 +993,7 @@ class ClassificationModel:
         else:
             return (
                 {
-                    **{"acc": acc, "precision": precision, "f1": f1, "mcc": mcc},
+                    **{"mcc": mcc},
                     **extra_metrics,
                 },
                 wrong,
@@ -809,13 +1024,23 @@ class ClassificationModel:
                 for i, text in enumerate(to_predict)
             ]
         else:
-            eval_examples = [
-                InputExample(i, text, None, 0) for i, text in enumerate(to_predict)
-            ]
-
-        eval_dataset = self.load_and_cache_examples(
-            eval_examples, evaluate=True, multi_label=multi_label, no_cache=True
-        )
+            if isinstance(to_predict[0], list):
+                eval_examples = [
+                    InputExample(i, text[0], text[1], 0)
+                    for i, text in enumerate(to_predict)
+                ]
+            else:
+                eval_examples = [
+                    InputExample(i, text, None, 0) for i, text in enumerate(to_predict)
+                ]
+        if args["sliding_window"]:
+            eval_dataset, window_counts = self.load_and_cache_examples(
+                eval_examples, evaluate=True, no_cache=True
+            )
+        else:
+            eval_dataset = self.load_and_cache_examples(
+                eval_examples, evaluate=True, multi_label=multi_label, no_cache=True
+            )
 
         eval_sampler = SequentialSampler(eval_dataset)
         eval_dataloader = DataLoader(
@@ -854,24 +1079,51 @@ class ClassificationModel:
 
         eval_loss = eval_loss / nb_eval_steps
 
-        model_outputs = preds
-        if multi_label:
-            if isinstance(args["threshold"], list):
-                threshold_values = args["threshold"]
-                preds = [
-                    [
-                        self._threshold(pred, threshold_values[i])
-                        for i, pred in enumerate(example)
-                    ]
-                    for example in preds
-                ]
-            else:
-                preds = [
-                    [self._threshold(pred, args["threshold"]) for pred in example]
-                    for example in preds
-                ]
+        if args["sliding_window"]:
+            count = 0
+            window_ranges = []
+            for n_windows in window_counts:
+                window_ranges.append([count, count + n_windows])
+                count += n_windows
+
+            preds = [
+                preds[window_range[0] : window_range[1]]
+                for window_range in window_ranges
+            ]
+
+            model_outputs = preds
+
+            preds = [np.argmax(pred, axis=1)[0] for pred in preds]
+            final_preds = []
+            for pred_row in preds:
+                mode_pred, counts = mode(pred_row)
+                if len(counts) > 1 and counts[0] == counts[1]:
+                    final_preds.append(args["tie_value"])
+                else:
+                    final_preds.append(mode_pred[0])
+            preds = np.array(final_preds)
+        elif not multi_label and args["regression"] == True:
+            preds = np.squeeze(preds)
+            model_outputs = preds
         else:
-            preds = np.argmax(preds, axis=1)
+            model_outputs = preds
+            if multi_label:
+                if isinstance(args["threshold"], list):
+                    threshold_values = args["threshold"]
+                    preds = [
+                        [
+                            self._threshold(pred, threshold_values[i])
+                            for i, pred in enumerate(example)
+                        ]
+                        for example in preds
+                    ]
+                else:
+                    preds = [
+                        [self._threshold(pred, args["threshold"]) for pred in example]
+                        for example in preds
+                    ]
+            else:
+                preds = np.argmax(preds, axis=1)
 
         return preds, model_outputs
 
@@ -893,3 +1145,6 @@ class ClassificationModel:
             )
 
         return inputs
+
+    def _get_last_metrics(self, metric_values):
+        return {metric: values[-1] for metric, values in metric_values.items()}

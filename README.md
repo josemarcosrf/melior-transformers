@@ -1,8 +1,29 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Downloads](https://pepy.tech/badge/simpletransformers)](https://pepy.tech/project/simpletransformers)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+<!-- [![Downloads](https://pepy.tech/badge/simpletransformers)](https://pepy.tech/project/simpletransformers) -->
 
 # Simple Transformers
 
-This library is based on the [Transformers](https://github.com/huggingface/transformers) library by HuggingFace. Simple Transformers lets you quickly train and evaluate Transformer models. Only 3 lines of code are needed to initialize a model, train the model, and evaluate a model. Currently supports Sequence Classification, Token Classification (NER), and Question Answering.
+This library is based on
+[simpleTransformers](https://github.com/ThilinaRajapakse/simpletransformers)
+which in turn is based on the
+[Transformers](https://github.com/huggingface/transformers) library by HuggingFace.
+
+We aim to expand the capabilities of the Transformers library so it can be used
+beyond classification. Providing a unified interface to using Transformers as
+a tool for _Semantic Search_, _Spellcheck correction_ or _Entity Extraction_ in
+a easy and extensible way.
+
+In addition we want to make it productionready, well tested
+and accesible via different interfaces for containarized and cloud environments.
+
+
+-------------------------
+
+The original simpleTransformers README follows:
+
+Simple Transformers lets you quickly train and evaluate Transformer models.
+Only 3 lines of code are needed to initialize a model, train the model, and evaluate a model.
+Currently supports Sequence Classification, Token Classification (NER), and Question Answering.
 
 # Table of contents
 
@@ -14,6 +35,7 @@ This library is based on the [Transformers](https://github.com/huggingface/trans
     * [Minimal Start for Binary Classification](#minimal-start-for-binary-classification)
     * [Minimal Start for Multiclass Classification](#minimal-start-for-multiclass-classification)
     * [Minimal Start for Multilabel Classification](#minimal-start-for-multilabel-classification)
+    * [Minimal Start for Sentence Pair Classification](#minimal-start-for-sentence-pair-classification)
     * [Real Dataset Examples](#real-dataset-examples)
     * [ClassificationModel](#classificationmodel)
 * [Named Entity Recognition](#named-entity-recognition)
@@ -25,6 +47,9 @@ This library is based on the [Transformers](https://github.com/huggingface/trans
     * [Minimal Start](#minimal-example)
     * [Real Dataset Examples](#real-dataset-examples-2)
     * [QuestionAnsweringModel](#questionansweringmodel)
+* [Regression](#regression)
+    * [Minimal Start for Regression](#minimal-start-for-regression)
+* [Visualization Support](#visualization-support)
 * [Experimental Features](#experimental-features)
     * [Sliding Window For Long Sequences](#sliding-window-for-long-sequences)
 * [Loading Saved Models](#loading-saved-models)
@@ -38,18 +63,18 @@ This library is based on the [Transformers](https://github.com/huggingface/trans
 ### With Conda
 
 1. Install Anaconda or Miniconda Package Manager from [here](https://www.anaconda.com/distribution/)
-2. Create a new virtual environment and install packages.  
-`conda create -n transformers python pandas tqdm`  
-`conda activate transformers`  
-If using cuda:  
-&nbsp;&nbsp;&nbsp;&nbsp;`conda install pytorch cudatoolkit=10.1 -c pytorch`  
-else:  
-&nbsp;&nbsp;&nbsp;&nbsp;`conda install pytorch cpuonly -c pytorch`  
+2. Create a new virtual environment and install packages.
+`conda create -n transformers python pandas tqdm`
+`conda activate transformers`
+If using cuda:
+&nbsp;&nbsp;&nbsp;&nbsp;`conda install pytorch cudatoolkit=10.1 -c pytorch`
+else:
+&nbsp;&nbsp;&nbsp;&nbsp;`conda install pytorch cpuonly -c pytorch`
 
 3. Install Apex if you are using fp16 training. Please follow the instructions [here](https://github.com/NVIDIA/apex). (Installing Apex from pip has caused issues for several people.)
 
-4. Install simpletransformers.  
-`pip install simpletransformers`  
+4. Install simpletransformers.
+`pip install simpletransformers`
 
 ## Usage
 
@@ -86,10 +111,11 @@ Supported model types:
 * DistilBERT
 * ALBERT
 * CamemBERT @[manueltonneau](https://github.com/manueltonneau)
+* XLM-RoBERTa
 
 ### Task Specific Notes
 
-* Set `'sliding_window': True` in `args` to prevent text being truncated. The default *stride* is `'stride': 0.8` which is `0.8 * max_seq_length`. Training text will be split using a sliding window and each window will be assigned the label from the orignal text. During evaluation and prediction, the mode of the predictions for each window will be the final prediction on each sample. The `tie_value` (default `1`) will be used in the case of a tie.  
+* Set `'sliding_window': True` in `args` to prevent text being truncated. The default *stride* is `'stride': 0.8` which is `0.8 * max_seq_length`. Training text will be split using a sliding window and each window will be assigned the label from the original text. During evaluation and prediction, the mode of the predictions for each window will be the final prediction on each sample. The `tie_value` (default `1`) will be used in the case of a tie.  
 *Currently not available for Multilabel Classification*
 
 #### Minimal Start for Binary Classification
@@ -149,7 +175,7 @@ eval_data = [['Example eval sentence belonging to class 1', 1], ['Example eval s
 eval_df = pd.DataFrame(eval_data)
 
 # Create a ClassificationModel
-model = ClassificationModel('bert', 'bert-base-cased', num_labels=3, args={'reprocess_input_data': True, 'overwrite_output_dir': True}) 
+model = ClassificationModel('bert', 'bert-base-cased', num_labels=3, args={'reprocess_input_data': True, 'overwrite_output_dir': True})
 # You can set class weights by using the optional weight argument
 
 # Train the model
@@ -205,16 +231,74 @@ print(raw_outputs)
 * The args dict of `MultiLabelClassificationModel` has an additional `threshold` parameter with default value 0.5. The threshold is the value at which a given label flips from 0 to 1 when predicting. The `threshold` may be a single value or a list of value with the same length as the number of labels. This enables the use of seperate threshold values for each label.
 * `MultiLabelClassificationModel` takes in an additional optional argument `pos_weight`. This should be a list with the same length as the number of labels. This enables using different weights for each label when calculating loss during training and evaluation.
 
+#### Minimal Start for Sentence Pair Classification
+
+* Training and evaluation Dataframes must contain a `text_a`, `text_b`, and a `labels` column.
+* The `predict()` function expects a list of lists in the format below. A single sample input should also be a list of lists like `[[text_a, text_b]]`.
+
+```
+[
+    [sample_1_text_a, sample_1_text_b],
+    [sample_2_text_a, sample_2_text_b],
+    [sample_3_text_a, sample_3_text_b],
+    # More samples
+]
+```
+
+```
+from simpletransformers.classification import ClassificationModel
+import pandas as pd
+import sklearn
+
+
+train_data = [
+    ['Example sentence belonging to class 1', 'Yep, this is 1', 1],
+    ['Example sentence belonging to class 0', 'Yep, this is 0', 0],
+    ['Example  2 sentence belonging to class 0', 'Yep, this is 0', 0]
+]
+
+train_df = pd.DataFrame(train_data, columns=['text_a', 'text_b', 'labels'])
+
+eval_data = [
+    ['Example sentence belonging to class 1', 'Yep, this is 1', 1],
+    ['Example sentence belonging to class 0', 'Yep, this is 0', 0],
+    ['Example  2 sentence belonging to class 0', 'Yep, this is 0', 0]
+]
+
+eval_df = pd.DataFrame(eval_data, columns=['text_a', 'text_b', 'labels'])
+
+train_args={
+    'reprocess_input_data': True,
+    'overwrite_output_dir': True,
+    'num_train_epochs': 3,
+}
+
+# Create a ClassificationModel
+model = ClassificationModel('roberta', 'roberta-base', num_labels=2, use_cuda=True, cuda_device=0, args=train_args)
+print(train_df.head())
+
+# Train the model
+model.train_model(train_df, eval_df=eval_df)
+
+# Evaluate the model
+result, model_outputs, wrong_predictions = model.eval_model(eval_df, acc=sklearn.metrics.accuracy_score)
+
+predictions, raw_outputs = model.predict([["I'd like to puts some CD-ROMS on my iPad, is that possible?'", "Yes, but wouldn't that block the screen?"]])
+print(predictions)
+print(raw_outputs)
+```
+
 #### Real Dataset Examples
 
 * [Yelp Reviews Dataset - Binary Classification](https://towardsdatascience.com/simple-transformers-introducing-the-easiest-bert-roberta-xlnet-and-xlm-library-58bf8c59b2a3?source=friends_link&sk=40726ceeadf99e1120abc9521a10a55c)
-* [AG News Dataset - Multiclass Classification](https://medium.com/swlh/simple-transformers-multi-class-text-classification-with-bert-roberta-xlnet-xlm-and-8b585000ce3a)
-* [Toxic Comments Dataset - Multilabel Classification](https://medium.com/@chaturangarajapakshe/multi-label-classification-using-bert-roberta-xlnet-xlm-and-distilbert-with-simple-transformers-b3e0cda12ce5?sk=354e688fe238bfb43e9a575216816219)
+* [AG News Dataset - Multiclass Classification](https://medium.com/swlh/simple-transformers-multi-class-text-classification-with-bert-roberta-xlnet-xlm-and-8b585000ce3a?source=friends_link&sk=90e1c97255b65cedf4910a99041d9dfc)
+* [Toxic Comments Dataset - Multilabel Classification](https://towardsdatascience.com/multi-label-classification-using-bert-roberta-xlnet-xlm-and-distilbert-with-simple-transformers-b3e0cda12ce5?source=friends_link&sk=354e688fe238bfb43e9a575216816219)
+* [Semantic Textual Similarity Benchmark - Sentence Pair](https://medium.com/@chaturangarajapakshe/solving-sentence-pair-tasks-using-simple-transformers-2496fe79d616?source=friends_link&sk=fbf7439e9c31f7aefa1613d423a0fd40)
 
 
 #### ClassificationModel
 
-`class simpletransformers.classification.ClassificationModel (model_type, model_name, args=None, use_cuda=True)`  
+`class simpletransformers.classification.ClassificationModel (model_type, model_name, args=None, use_cuda=True)`
 This class  is used for Text Classification tasks.
 
 `Class attributes`
@@ -233,12 +317,12 @@ This class  is used for Text Classification tasks.
 * `args`: (optional) python dict - A dictionary containing any settings that should be overwritten from the default values.
 * `use_cuda`: (optional) bool - Default = True. Flag used to indicate whether CUDA should be used.
 
-`class methods`  
+`class methods`
 **`train_model(self, train_df, output_dir=None, show_running_loss=True, args=None, eval_df=None)`**
 
 Trains the model using 'train_df'
 
-Args:  
+Args:
 * `train_df`: Pandas Dataframe containing at least two columns. If the Dataframe has a header, it should contain a 'text' and a 'labels' column. If no header is present, the Dataframe should contain at least two columns, with the first column containing the text, and the second column containing the label. The model will be trained on this Dataframe.
 
 * `output_dir` (optional): The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
@@ -249,26 +333,26 @@ Args:
 
 * `eval_df` (optional): A DataFrame against which evaluation will be performed when `evaluate_during_training` is enabled. Is required if `evaluate_during_training` is enabled.
 
-Returns:  
+Returns:
 * None
 
 **`eval_model(self, eval_df, output_dir=None, verbose=False)`**
 
 Evaluates the model on eval_df. Saves results to output_dir.
 
-Args:  
+Args:
 * eval_df: Pandas Dataframe containing at least two columns. If the Dataframe has a header, it should contain a 'text' and a 'labels' column. If no header is present, the Dataframe should contain at least two columns, with the first column containing the text, and the second column containing the label. The model will be evaluated on this Dataframe.
 
-* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.  
+* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
 
-* verbose: If verbose, results will be printed to the console on completion of evaluation.  
+* verbose: If verbose, results will be printed to the console on completion of evaluation.
 
-Returns:  
-* result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)  
+Returns:
+* result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)
 
->model_outputs: List of model outputs for each row in eval_df  
+>model_outputs: List of model outputs for each row in eval_df
 
-* wrong_preds: List of InputExample objects corresponding to each incorrect prediction by the model  
+* wrong_preds: List of InputExample objects corresponding to each incorrect prediction by the model
 
 **`predict(self, to_predict)`**
 
@@ -278,7 +362,7 @@ Args:
 * to_predict: A python list of text (str) to be sent to the model for prediction.
 
 Returns:
-* preds: A python list of the predictions (0 or 1) for each text.  
+* preds: A python list of the predictions (0 or 1) for each text.
 * model_outputs: A python list of the raw model outputs for each text.
 
 
@@ -302,16 +386,16 @@ Converts a list of InputExample objects to a TensorDataset containing InputFeatu
 Computes the evaluation metrics for the model predictions.
 
 Args:
-* preds: Model predictions  
+* preds: Model predictions
 
-* labels: Ground truth labels  
+* labels: Ground truth labels
 
-* eval_examples: List of examples on which evaluation was performed  
+* eval_examples: List of examples on which evaluation was performed
 
 Returns:
-* result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)  
+* result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)
 
-* wrong: List of InputExample objects corresponding to each incorrect prediction by the model  
+* wrong: List of InputExample objects corresponding to each incorrect prediction by the model
 
 ---
 
@@ -326,6 +410,7 @@ Supported model types:
 * RoBERTa
 * DistilBERT
 * CamemBERT
+* XLM-RoBERTa
 
 ```
 model = NERModel('bert', 'bert-base-cased', labels=["LABEL_1", "LABEL_2", "LABEL_3"])
@@ -368,11 +453,11 @@ print(predictions)
 
 #### Real Dataset Examples
 
-* [CoNLL Dataset Example](https://medium.com/@chaturangarajapakshe/simple-transformers-named-entity-recognition-with-transformer-models-c04b9242a2a0?sk=e8b98c994173cd5219f01e075727b096)
+* [CoNLL Dataset Example](https://towardsdatascience.com/simple-transformers-named-entity-recognition-with-transformer-models-c04b9242a2a0?source=friends_link&sk=e8b98c994173cd5219f01e075727b096)
 
 #### NERModel
 
-`class simpletransformers.ner.ner_model.NERModel (model_type, model_name, labels=None, args=None, use_cuda=True)`  
+`class simpletransformers.ner.ner_model.NERModel (model_type, model_name, labels=None, args=None, use_cuda=True)`
 This class  is used for Named Entity Recognition.
 
 `Class attributes`
@@ -390,14 +475,14 @@ This class  is used for Named Entity Recognition.
 * `args`: (optional) python dict - A dictionary containing any settings that should be overwritten from the default values.
 * `use_cuda`: (optional) bool - Default = True. Flag used to indicate whether CUDA should be used.
 
-`class methods`  
+`class methods`
 **`train_model(self, train_data, output_dir=None, args=None, eval_df=None)`**
 
 Trains the model using 'train_data'
 
-Args:  
+Args:
 * train_data: train_data should be the path to a .txt file containing the training data OR a pandas DataFrame with 3 columns.
-If a text file is used the data should be in the CoNLL format. i.e. One word per line, with sentences seperated by an empty line. 
+If a text file is used the data should be in the CoNLL format. i.e. One word per line, with sentences seperated by an empty line.
 The first word of the line should be a word, and the last should be a Name Entity Tag.
 If a DataFrame is given, each sentence should be split into words, with each word assigned a tag, and with all words from the same sentence given the same sentence_id.
 
@@ -410,21 +495,21 @@ If a DataFrame is given, each sentence should be split into words, with each wor
 * eval_df (optional): A DataFrame against which evaluation will be performed when `evaluate_during_training` is enabled. Is required if `evaluate_during_training` is enabled.
 
 
-Returns:  
+Returns:
 * None
 
 **`eval_model(self, eval_data, output_dir=None, verbose=True)`**
 
 Evaluates the model on eval_data. Saves results to output_dir.
 
-Args:  
+Args:
 * eval_data: Pandas Dataframe containing at least two columns. If the Dataframe has a header, it should contain a 'text' and a 'labels' column. If no header is present, the Dataframe should contain at least two columns, with the first column containing the text, and the second column containing the label. The model will be evaluated on this Dataframe.
 
-* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.  
+* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
 
-* verbose: If verbose, results will be printed to the console on completion of evaluation.  
+* verbose: If verbose, results will be printed to the console on completion of evaluation.
 
-Returns:  
+Returns:
 * result: Dictionary containing evaluation results. (eval_loss, precision, recall, f1_score)
 
 * model_outputs: List of raw model outputs
@@ -482,8 +567,8 @@ Each such dictionary contains two attributes, the `"context"` and `"qas"`.
 
 Questions and answers are represented as dictionaries. Each dictionary in `qas` has the following format.
 * `id`: (string) A unique ID for the question. Should be unique across the entire dataset.
-* `question`: (string) A question. 
-* `is_impossible`: (bool) Indicates whether the question can be answered correctly from the context. 
+* `question`: (string) A question.
+* `is_impossible`: (bool) Indicates whether the question can be answered correctly from the context.
 * `answers`: (list) The list of correct answers to the question.
 
 A single answer is represented by a dictionary with the following attributes.
@@ -577,11 +662,11 @@ print(model.predict(to_predict))
 
 #### Real Dataset Examples
 
-* [SQuAD 2.0 - Question Answering](https://medium.com/@chaturangarajapakshe/question-answering-with-bert-xlnet-xlm-and-distilbert-using-simple-transformers-4d8785ee762a?sk=e8e6f9a39f20b5aaf08bbcf8b0a0e1c2)
+* [SQuAD 2.0 - Question Answering](https://towardsdatascience.com/question-answering-with-bert-xlnet-xlm-and-distilbert-using-simple-transformers-4d8785ee762a?source=friends_link&sk=e8e6f9a39f20b5aaf08bbcf8b0a0e1c2)
 
 ### QuestionAnsweringModel
 
-`class simpletransformers.question_answering.QuestionAnsweringModel (model_type, model_name, args=None, use_cuda=True)`  
+`class simpletransformers.question_answering.QuestionAnsweringModel (model_type, model_name, args=None, use_cuda=True)`
 This class  is used for Question Answering tasks.
 
 `Class attributes`
@@ -598,12 +683,12 @@ This class  is used for Question Answering tasks.
 * `args`: (optional) python dict - A dictionary containing any settings that should be overwritten from the default values.
 * `use_cuda`: (optional) bool - Default = True. Flag used to indicate whether CUDA should be used.
 
-`class methods`  
+`class methods`
 **`train_model(self, train_df, output_dir=None, args=None, eval_df=None)`**
 
 Trains the model using 'train_file'
 
-Args:  
+Args:
 * train_df: ath to JSON file containing training data. The model will be trained on this file.
             output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
 
@@ -615,24 +700,24 @@ Args:
 
 * eval_file (optional): Path to JSON file containing evaluation data against which evaluation will be performed when evaluate_during_training is enabled. Is required if evaluate_during_training is enabled.
 
-Returns:  
+Returns:
 * None
 
 **`eval_model(self, eval_df, output_dir=None, verbose=False)`**
 
 Evaluates the model on eval_file. Saves results to output_dir.
 
-Args:  
+Args:
 * eval_file: Path to JSON file containing evaluation data. The model will be evaluated on this file.
 
-* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.  
+* output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
 
-* verbose: If verbose, results will be printed to the console on completion of evaluation.  
+* verbose: If verbose, results will be printed to the console on completion of evaluation.
 
-Returns:  
+Returns:
 * result: Dictionary containing evaluation results. (correct, similar, incorrect)
 
-* text: A dictionary containing the 3 dictionaries correct_text, similar_text (the predicted answer is a substring of the correct answer or vise versa), incorrect_text. 
+* text: A dictionary containing the 3 dictionaries correct_text, similar_text (the predicted answer is a substring of the correct answer or vise versa), incorrect_text.
 
 
 **`predict(self, to_predict)`**
@@ -702,6 +787,77 @@ If null_score - best_non_null is greater than the threshold predict null.
 
 ---
 
+## Regression
+
+Regression tasks also use the ClassificationModel with 2 caveats.
+
+1. `num_labels` should be 1.
+2. `regression` should be `True` in `args` dict.
+
+Regression can be used with either single sentence or sentence pair tasks.
+
+#### Minimal Start for Regression
+
+```
+from simpletransformers.classification import ClassificationModel
+import pandas as pd
+
+
+train_data = [
+    ['Example sentence belonging to class 1', 'Yep, this is 1', 1.8],
+    ['Example sentence belonging to class 0', 'Yep, this is 0', 0.2],
+    ['Example  2 sentence belonging to class 0', 'Yep, this is 0', 4.5]
+]
+
+train_df = pd.DataFrame(train_data, columns=['text_a', 'text_b', 'labels'])
+
+eval_data = [
+    ['Example sentence belonging to class 1', 'Yep, this is 1', 1.9],
+    ['Example sentence belonging to class 0', 'Yep, this is 0', 0.1],
+    ['Example  2 sentence belonging to class 0', 'Yep, this is 0', 5]
+]
+
+eval_df = pd.DataFrame(eval_data, columns=['text_a', 'text_b', 'labels'])
+
+train_args={
+    'reprocess_input_data': True,
+    'overwrite_output_dir': True,
+    'num_train_epochs': 3,
+
+    'regression': True,
+}
+
+# Create a ClassificationModel
+model = ClassificationModel('roberta', 'roberta-base', num_labels=1, use_cuda=True, cuda_device=0, args=train_args)
+print(train_df.head())
+
+# Train the model
+model.train_model(train_df, eval_df=eval_df)
+
+# Evaluate the model
+result, model_outputs, wrong_predictions = model.eval_model(eval_df)
+
+predictions, raw_outputs = model.predict([["I'd like to puts some CD-ROMS on my iPad, is that possible?'", "Yes, but wouldn't that block the screen?"]])
+print(predictions)
+print(raw_outputs)
+```
+
+---
+
+## Visualization Support
+
+The [Weights & Biases](https://www.wandb.com/) framework is supported for visualizing model training.
+
+To use this, simply set a project name for W&B in the `wandb_project` attribute of the `args` dictionary. This will log all hyperparameter values, training losses, and evaluation metrics to the given project.
+
+```
+model = ClassificationModel('roberta', 'roberta-base', args={'wandb_project': 'project-name'})
+```
+
+For a complete example, see [here](https://medium.com/skilai/to-see-is-to-believe-visualizing-the-training-of-machine-learning-models-664ef3fe4f49).
+
+---
+
 ## Experimental Features
 
 To use experimental features, import from `simpletransformers.experimental.X`
@@ -716,18 +872,19 @@ Normally, sequences longer than `max_seq_length` are unceremoniously truncated.
 
 This experimental feature moves a sliding window over each sequence and generates sub-sequences with length `max_seq_length`. The model output for each sub-sequence is averaged into a single output before being sent to the linear classifier.
 
-Currently avaiable on binary and multiclass classification models of the following types.
+Currently available on binary and multiclass classification models of the following types:
 
 * BERT
+* DistilBERT
 * RoBERTa
 * AlBERT
 * XLNet
 * CamemBERT
 
-Set `sliding_window=True` for the ClassificationModel to enable this feature.
+Set `sliding_window` to `True` for the ClassificationModel to enable this feature.
 
 ```
-from simpletransformers.experimental.classification import ClassificationModel
+from simpletransformers.classification import ClassificationModel
 import pandas as pd
 import sklearn
 
@@ -740,6 +897,7 @@ eval_data = [['Example eval sentence belonging to class 1', 1], ['Example eval s
 eval_df = pd.DataFrame(eval_data)
 
 train_args={
+    'sliding_window': True,
     'reprocess_input_data': True,
     'overwrite_output_dir': True,
     'evaluate_during_training': True,
@@ -749,7 +907,7 @@ train_args={
 }
 
 # Create a TransformerModel
-model = ClassificationModel('camembert', 'camembert-base', sliding_window=True, args=train_args, use_cuda=False)
+model = ClassificationModel('camembert', 'camembert-base', args=train_args, use_cuda=False)
 print(train_df.head())
 
 # Train the model
@@ -806,16 +964,21 @@ self.args = {
   'logging_steps': 50,
   'evaluate_during_training': False,
   'evaluate_during_training_steps': 2000,
+  'use_cached_eval_features': True,
+  `save_eval_checkpoints`: True
   'save_steps': 2000,
+  'save_model_every_epoch': False,
   'tensorboard_dir': None,
 
   'overwrite_output_dir': False,
   'reprocess_input_data': False,
-  
+
   'process_count': cpu_count() - 2 if cpu_count() > 2 else 1
   'n_gpu': 1,
   'silent': False,
   'use_multiprocessing': True,
+
+  'wandb_project': None,
 }
 ```
 
@@ -869,11 +1032,20 @@ Set to True to perform evaluation while training models. Make sure `eval_df` is 
 #### *evaluate_during_training_steps*
 Perform evaluation at every specified number of steps. A checkpoint model and the evaluation results will be saved.
 
+#### *use_cached_eval_features*
+Evaluation during training uses cached features. Setting this to `False` will cause features to be recomputed at every evaluation step.
+
+#### *save_eval_checkpoints*
+Save a model checkpoint for every evaluation performed.
+
 #### *logging_steps: int*
 Log training loss and learning at every specified number of steps.
 
 #### *save_steps: int*
 Save a model checkpoint at every specified number of steps.
+
+#### *save_model_every_epoch: bool*
+Save a model at the end of every epoch.
 
 #### *tensorboard_dir: str*
 The directory where Tensorboard events will be stored during training. By default, Tensorboard events will be saved in a subfolder inside `runs/`  like `runs/Dec02_09-32-58_36d9e58955b0/`.

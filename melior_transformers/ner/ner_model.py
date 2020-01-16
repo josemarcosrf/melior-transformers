@@ -5,12 +5,11 @@ import math
 import json
 import random
 import warnings
-
 from multiprocessing import cpu_count
 
 import torch
 import numpy as np
-
+import pandas as pd
 
 from scipy.stats import pearsonr
 from seqeval.metrics import precision_score, recall_score, f1_score
@@ -28,16 +27,14 @@ from torch.utils.data import (
 from transformers import AdamW, get_linear_schedule_with_warmup
 from transformers import WEIGHTS_NAME, BertConfig, BertForTokenClassification, BertTokenizer
 from transformers import DistilBertConfig, DistilBertForTokenClassification, DistilBertTokenizer
-try:
-    from transformers import RobertaConfig, RobertaForTokenClassification, RobertaTokenizer
-    roberta_available = True
-except ImportError:
-    print("Warning: Importing RobertaForTokenClassification unsuccessful. Please use BERT for now. See issue on https://github.com/huggingface/transformers/issues/1631.")
-    roberta_available = False
+from transformers import RobertaConfig, RobertaForTokenClassification, RobertaTokenizer
+from transformers import XLMRobertaConfig, XLMRobertaForTokenClassification, XLMRobertaTokenizer
 
-
-from simpletransformers.ner.ner_utils import InputExample, convert_examples_to_features, get_labels, read_examples_from_file, get_examples_from_df
+from melior_transformers.ner.ner_utils import InputExample, convert_examples_to_features, get_labels, read_examples_from_file, get_examples_from_df
 from transformers import CamembertConfig, CamembertForTokenClassification, CamembertTokenizer
+from melior_transformers.config.global_args import global_args
+
+import wandb
 
 
 class NERModel:
@@ -60,19 +57,13 @@ class NERModel:
             self.labels = ["O", "B-MISC", "I-MISC",  "B-PER", "I-PER", "B-ORG", "I-ORG", "B-LOC", "I-LOC"]
         self.num_labels = len(self.labels)
 
-        if roberta_available:
-            MODEL_CLASSES = {
-                'bert': (BertConfig, BertForTokenClassification, BertTokenizer),
-                'roberta': (RobertaConfig, RobertaForTokenClassification, RobertaTokenizer),
-                'distilbert': (DistilBertConfig, DistilBertForTokenClassification, DistilBertTokenizer),
-                'camembert': (CamembertConfig, CamembertForTokenClassification, CamembertTokenizer)
-            }
-        else:
-            MODEL_CLASSES = {
-                'bert': (BertConfig, BertForTokenClassification, BertTokenizer),
-                'distilbert': (DistilBertConfig, DistilBertForTokenClassification, BertTokenizer),
-                'camembert': (CamembertConfig, CamembertForTokenClassification, CamembertTokenizer)
-            }
+        MODEL_CLASSES = {
+            'bert': (BertConfig, BertForTokenClassification, BertTokenizer),
+            'roberta': (RobertaConfig, RobertaForTokenClassification, RobertaTokenizer),
+            'distilbert': (DistilBertConfig, DistilBertForTokenClassification, DistilBertTokenizer),
+            'camembert': (CamembertConfig, CamembertForTokenClassification, CamembertTokenizer),
+            'xlmroberta': (XLMRobertaConfig, XLMRobertaForTokenClassification, XLMRobertaTokenizer),
+        }
 
         config_class, model_class, tokenizer_class = MODEL_CLASSES[model_type]
 
@@ -91,39 +82,9 @@ class NERModel:
 
         self.results = {}
 
-        self.args = {
-            'output_dir': 'outputs/',
-            'cache_dir': 'cache_dir/',
+        self.args = {}
 
-            'fp16': True,
-            'fp16_opt_level': 'O1',
-            'max_seq_length': 128,
-            'train_batch_size': 8,
-            'gradient_accumulation_steps': 1,
-            'eval_batch_size': 8,
-            'num_train_epochs': 1,
-            'weight_decay': 0,
-            'learning_rate': 4e-5,
-            'adam_epsilon': 1e-8,
-            'warmup_ratio': 0.06,
-            'warmup_steps': 0,
-            'max_grad_norm': 1.0,
-            'do_lower_case': False,
-
-            'logging_steps': 50,
-            'save_steps': 2000,
-            'evaluate_during_training': False,
-            'evaluate_during_training_steps': 2000,
-            'tensorboard_folder': None,
-
-            'overwrite_output_dir': False,
-            'reprocess_input_data': False,
-
-            'process_count': cpu_count() - 2 if cpu_count() > 2 else 1,
-            'n_gpu': 1,
-            'silent': False,
-            'use_multiprocessing': True,
-        }
+        self.args.update(global_args)
 
         if not use_cuda:
             self.args['fp16'] = False
@@ -203,7 +164,7 @@ class NERModel:
         model = self.model
         args = self.args
 
-        tb_writer = SummaryWriter(logdir=args["tensorboard_folder"])
+        tb_writer = SummaryWriter(logdir=args["tensorboard_dir"])
         train_sampler = RandomSampler(train_dataset)
         train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args["train_batch_size"])
 
@@ -227,8 +188,7 @@ class NERModel:
             try:
                 from apex import amp
             except ImportError:
-                raise ImportError(
-                    "Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
+                raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
 
             model, optimizer = amp.initialize(model, optimizer, opt_level=args["fp16_opt_level"])
 
@@ -240,11 +200,24 @@ class NERModel:
         model.zero_grad()
         train_iterator = trange(int(args["num_train_epochs"]), desc="Epoch", disable=args['silent'])
         epoch_number = 0
+        if args['evaluate_during_training']:
+            training_progress_scores = {
+                'global_step': [],
+                'precision': [],
+                'recall': [],
+                'f1_score': [],
+                'train_loss': [],
+                'eval_loss': [],
+            }
 
+        if args['wandb_project']:
+            wandb.init(project=args['wandb_project'], config={**args})
+            wandb.watch(self.model)
+
+        model.train()
         for _ in train_iterator:
             # epoch_iterator = tqdm(train_dataloader, desc="Iteration")
             for step, batch in enumerate(tqdm(train_dataloader, desc="Current iteration", disable=args['silent'])):
-                model.train()
                 batch = tuple(t.to(device) for t in batch)
 
                 inputs = {"input_ids": batch[0],
@@ -260,6 +233,8 @@ class NERModel:
 
                 if args['n_gpu'] > 1:
                     loss = loss.mean()  # mean() to average on multi-gpu parallel training
+
+                current_loss = loss.item()
 
                 if show_running_loss:
                     print("\rRunning loss: %f" % loss, end="")
@@ -287,6 +262,8 @@ class NERModel:
                         tb_writer.add_scalar("lr", scheduler.get_lr()[0], global_step)
                         tb_writer.add_scalar("loss", (tr_loss - logging_loss)/args["logging_steps"], global_step)
                         logging_loss = tr_loss
+                        if args['wandb_project']:
+                            wandb.log({'Training loss': current_loss, 'lr': scheduler.get_lr()[0], 'global_step': global_step})
 
                     if args["save_steps"] > 0 and global_step % args["save_steps"] == 0:
                         # Save model checkpoint
@@ -311,24 +288,36 @@ class NERModel:
                         if not os.path.exists(output_dir_current):
                             os.makedirs(output_dir_current)
 
-                        model_to_save = model.module if hasattr(model, "module") else model
-                        model_to_save.save_pretrained(output_dir_current)
-                        self.tokenizer.save_pretrained(output_dir_current)
+                        if args['save_eval_checkpoints']:
+                            model_to_save = model.module if hasattr(model, "module") else model
+                            model_to_save.save_pretrained(output_dir_current)
+                            self.tokenizer.save_pretrained(output_dir_current)
 
                         output_eval_file = os.path.join(output_dir_current, "eval_results.txt")
                         with open(output_eval_file, "w") as writer:
                             for key in sorted(results.keys()):
                                 writer.write("{} = {}\n".format(key, str(results[key])))
 
-            epoch_number += 1
-            output_dir_current = os.path.join(output_dir, "epoch-{}".format(epoch_number))
+                        training_progress_scores['global_step'].append(global_step)
+                        training_progress_scores['train_loss'].append(current_loss)
+                        for key in results:
+                            training_progress_scores[key].append(results[key])
+                        report = pd.DataFrame(training_progress_scores)
+                        report.to_csv(args['output_dir'] + 'training_progress_scores.csv', index=False)
 
-            if not os.path.exists(output_dir_current):
+                        if args['wandb_project']:
+                            wandb.log(self._get_last_metrics(training_progress_scores))
+
+            epoch_number += 1
+            output_dir_current = os.path.join(output_dir, "checkpoint-{}-epoch-{}".format(global_step, epoch_number))
+
+            if (args['save_model_every_epoch'] or args['evaluate_during_training']) and not os.path.exists(output_dir_current):
                 os.makedirs(output_dir_current)
 
-            model_to_save = model.module if hasattr(model, "module") else model
-            model_to_save.save_pretrained(output_dir_current)
-            self.tokenizer.save_pretrained(output_dir_current)
+            if args['save_model_every_epoch']:
+                model_to_save = model.module if hasattr(model, "module") else model
+                model_to_save.save_pretrained(output_dir_current)
+                self.tokenizer.save_pretrained(output_dir_current)
 
             if args['evaluate_during_training']:
                 results, _, _ = self.eval_model(eval_df, verbose=True)
@@ -564,7 +553,7 @@ class NERModel:
         if not os.path.isdir(self.args["cache_dir"]):
             os.mkdir(self.args["cache_dir"])
 
-        if os.path.exists(cached_features_file) and not args["reprocess_input_data"] and not no_cache:
+        if os.path.exists(cached_features_file) and ((not args["reprocess_input_data"] and not no_cache) or (mode == "dev" and args['use_cached_eval_features'])):
             features = torch.load(cached_features_file)
             print(f"Features loaded from cache at {cached_features_file}")
         else:
@@ -605,3 +594,6 @@ class NERModel:
 
     def _move_model_to_device(self):
         self.model.to(self.device)
+
+    def _get_last_metrics(self, metric_values):
+        return {metric: values[-1] for metric, values in metric_values.items()}

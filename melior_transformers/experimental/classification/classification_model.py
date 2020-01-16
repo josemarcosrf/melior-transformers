@@ -42,18 +42,18 @@ from transformers import (
     CamembertConfig, CamembertTokenizer
 )
 
-from simpletransformers.experimental.classification.classification_utils import (
+from melior_transformers.experimental.classification.classification_utils import (
     InputExample,
     convert_examples_to_features
 )
 
-from simpletransformers.experimental.classification.transformer_models.bert_model import BertForSequenceClassification
-from simpletransformers.experimental.classification.transformer_models.roberta_model import RobertaForSequenceClassification
-from simpletransformers.experimental.classification.transformer_models.xlm_model import XLMForSequenceClassification
-from simpletransformers.experimental.classification.transformer_models.xlnet_model import XLNetForSequenceClassification
-from simpletransformers.experimental.classification.transformer_models.distilbert_model import DistilBertForSequenceClassification
-from simpletransformers.experimental.classification.transformer_models.albert_model import AlbertForSequenceClassification
-from simpletransformers.experimental.classification.transformer_models.camembert_model import CamembertForSequenceClassification
+from melior_transformers.experimental.classification.transformer_models.bert_model import BertForSequenceClassification
+from melior_transformers.experimental.classification.transformer_models.roberta_model import RobertaForSequenceClassification
+from melior_transformers.experimental.classification.transformer_models.xlm_model import XLMForSequenceClassification
+from melior_transformers.experimental.classification.transformer_models.xlnet_model import XLNetForSequenceClassification
+from melior_transformers.experimental.classification.transformer_models.distilbert_model import DistilBertForSequenceClassification
+from melior_transformers.experimental.classification.transformer_models.albert_model import AlbertForSequenceClassification
+from melior_transformers.experimental.classification.transformer_models.camembert_model import CamembertForSequenceClassification
 
 
 class ClassificationModel:
@@ -131,7 +131,7 @@ class ClassificationModel:
             'logging_steps': 50,
             'save_steps': 2000,
             'evaluate_during_training': False,
-            'tensorboard_folder': None,
+            'tensorboard_dir': None,
 
             'overwrite_output_dir': False,
             'reprocess_input_data': False,
@@ -221,7 +221,7 @@ class ClassificationModel:
         model = self.model
         args = self.args
 
-        tb_writer = SummaryWriter(logdir=args["tensorboard_folder"])
+        tb_writer = SummaryWriter(logdir=args["tensorboard_dir"])
         train_sampler = RandomSampler(train_dataset)
         train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args["train_batch_size"])
 
@@ -245,8 +245,7 @@ class ClassificationModel:
             try:
                 from apex import amp
             except ImportError:
-                raise ImportError(
-                    "Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
+                raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use fp16 training.")
 
             model, optimizer = amp.initialize(model, optimizer, opt_level=args["fp16_opt_level"])
 
@@ -491,8 +490,7 @@ class ClassificationModel:
             # features = pad_sequence([torch.tensor(features_per_sequence) for features_per_sequence in features])
             all_input_ids = pad_sequence([torch.tensor([f.input_ids for f in features_per_sequence], dtype=torch.long) for features_per_sequence in features], batch_first=True)
             all_input_mask = pad_sequence([torch.tensor([f.input_mask for f in features_per_sequence], dtype=torch.long) for features_per_sequence in features], batch_first=True)
-            all_segment_ids = pad_sequence([torch.tensor([f.segment_ids for f in features_per_sequence], dtype=torch.long)
-                                            for features_per_sequence in features], batch_first=True)
+            all_segment_ids = pad_sequence([torch.tensor([f.segment_ids for f in features_per_sequence], dtype=torch.long) for features_per_sequence in features], batch_first=True)
 
             # all_input_ids = torch.tensor([f.input_ids for feature in features for f in feature], dtype=torch.long)
             # all_input_mask = torch.tensor([f.input_mask for feature in features for f in feature], dtype=torch.long)
@@ -501,8 +499,7 @@ class ClassificationModel:
             if output_mode == "classification":
                 all_label_ids = pad_sequence([torch.tensor([f.label_id for f in features_per_sequence], dtype=torch.long) for features_per_sequence in features], batch_first=True)
             elif output_mode == "regression":
-                all_label_ids = pad_sequence([torch.tensor([f.label_id for f in features_per_sequence], dtype=torch.float)
-                                              for features_per_sequence in features], batch_first=True)
+                all_label_ids = pad_sequence([torch.tensor([f.label_id for f in features_per_sequence], dtype=torch.float) for features_per_sequence in features], batch_first=True)
         else:
             all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
             all_input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.long)

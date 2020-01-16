@@ -2,14 +2,16 @@ import torch
 
 from multiprocessing import cpu_count
 
-from simpletransformers.classification import ClassificationModel
-from simpletransformers.custom_models.models import (BertForMultiLabelSequenceClassification, 
+from melior_transformers.classification import ClassificationModel
+from melior_transformers.custom_models.models import (BertForMultiLabelSequenceClassification, 
                                                     RobertaForMultiLabelSequenceClassification, 
                                                     XLNetForMultiLabelSequenceClassification,
                                                     XLMForMultiLabelSequenceClassification,
                                                     DistilBertForMultiLabelSequenceClassification,
                                                     AlbertForMultiLabelSequenceClassification
                                                     )
+from melior_transformers.config.global_args import global_args
+
 from transformers import (
     WEIGHTS_NAME,
     BertConfig, BertTokenizer,
@@ -68,43 +70,14 @@ class MultiLabelClassificationModel(ClassificationModel):
         self.results = {}
 
         self.args = {
-            'output_dir': 'outputs/',
-            'cache_dir': 'cache_dir/',
-
-            'fp16': False,
-            'fp16_opt_level': 'O1',
-            'max_seq_length': 128,
-            'train_batch_size': 8,
-            'gradient_accumulation_steps': 1,
-            'eval_batch_size': 8,
-            'num_train_epochs': 1,
-            'weight_decay': 0,
-            'learning_rate': 4e-5,
-            'adam_epsilon': 1e-8,
-            'warmup_ratio': 0.06,
-            'warmup_steps': 0,
-            'max_grad_norm': 1.0,
-            'do_lower_case': False,
-
-            'logging_steps': 50,
-            'save_steps': 2000,
-            'evaluate_during_training': False,
-            'evaluate_during_training_steps': 2000,
-            'tensorboard_dir': None,
-
-            'overwrite_output_dir': False,
-            'reprocess_input_data': False,
-
-            'process_count': cpu_count() - 2 if cpu_count() > 2 else 1,
-            'n_gpu': 1,
-            'use_multiprocessing': True,
-            'silent': False,
-
             'threshold': 0.5,
 
             'sliding_window': False,
-            'stride': False
+            'tie_value': 1,
+            'stride': False,
         }
+
+        self.args.update(global_args)
 
         if not use_cuda:
             self.args['fp16'] = False
@@ -117,7 +90,7 @@ class MultiLabelClassificationModel(ClassificationModel):
         self.args["model_name"] = model_name
         self.args["model_type"] = model_type
 
-    def train_model(self, train_df, multi_label=True, eval_df=None, output_dir=None, show_running_loss=True, args=None):
+    def train_model(self, train_df, multi_label=True, eval_df=None, output_dir=None, show_running_loss=True, args=None, **kwargs):
         return super().train_model(train_df, multi_label=multi_label, eval_df=eval_df, output_dir=output_dir, show_running_loss=show_running_loss, args=args)
 
     def eval_model(self, eval_df, multi_label=True, output_dir=None, verbose=False, **kwargs):

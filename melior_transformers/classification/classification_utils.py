@@ -26,6 +26,8 @@ from io import open
 from multiprocessing import Pool, cpu_count
 
 from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import matthews_corrcoef, f1_score
+
 from tqdm.auto import tqdm
 import shutil
 
@@ -74,23 +76,9 @@ def convert_example_to_feature(
     cls_token_segment_id=1,
     pad_token_segment_id=0,
     mask_padding_with_zero=True,
-    sep_token_extra=False,
+    sep_token_extra=False
 ):
-    (
-        example,
-        max_seq_length,
-        tokenizer,
-        output_mode,
-        cls_token_at_end,
-        cls_token,
-        sep_token,
-        cls_token_segment_id,
-        pad_on_left,
-        pad_token_segment_id,
-        sep_token_extra,
-        multi_label,
-        stride,
-    ) = example_row
+    example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label, stride = example_row
 
     tokens_a = tokenizer.tokenize(example.text_a)
 
@@ -172,6 +160,9 @@ def convert_example_to_feature(
     # else:
     #     raise KeyError(output_mode)
 
+    if output_mode == 'regressioin':
+        label_id = float(example.label)
+
     return InputFeatures(
         input_ids=input_ids,
         input_mask=input_mask,
@@ -190,21 +181,7 @@ def convert_example_to_feature_sliding_window(
     mask_padding_with_zero=True,
     sep_token_extra=False,
 ):
-    (
-        example,
-        max_seq_length,
-        tokenizer,
-        output_mode,
-        cls_token_at_end,
-        cls_token,
-        sep_token,
-        cls_token_segment_id,
-        pad_on_left,
-        pad_token_segment_id,
-        sep_token_extra,
-        multi_label,
-        stride,
-    ) = example_row
+    example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label, stride = example_row
 
     if stride < 1:
         stride = int(max_seq_length * stride)
