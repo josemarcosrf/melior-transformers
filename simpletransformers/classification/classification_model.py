@@ -119,32 +119,31 @@ class ClassificationModel:
             cuda_device (optional): Specific GPU that should be used. Will use the first available GPU by default.
         """
 
-        # Get modifyed
-        if "sliding_window" in args and args["sliding_window"]:
-            from simpletransformers.classification.transformer_models.bert_model import (
-                BertForSequenceClassification,
-            )
-            from simpletransformers.classification.transformer_models.roberta_model import (
-                RobertaForSequenceClassification,
-            )
-            from simpletransformers.classification.transformer_models.xlm_model import (
-                XLMForSequenceClassification,
-            )
-            from simpletransformers.classification.transformer_models.xlnet_model import (
-                XLNetForSequenceClassification,
-            )
-            from simpletransformers.classification.transformer_models.distilbert_model import (
-                DistilBertForSequenceClassification,
-            )
-            from simpletransformers.classification.transformer_models.albert_model import (
-                AlbertForSequenceClassification,
-            )
-            from simpletransformers.classification.transformer_models.camembert_model import (
-                CamembertForSequenceClassification,
-            )
-            from simpletransformers.classification.transformer_models.xlm_roberta_model import (
-                XLMRobertaForSequenceClassification,
-            )
+        if args is not None and args.get("sliding_window", False):
+                from simpletransformers.classification.transformer_models.bert_model import (
+                    BertForSequenceClassification,
+                )
+                from simpletransformers.classification.transformer_models.roberta_model import (
+                    RobertaForSequenceClassification,
+                )
+                from simpletransformers.classification.transformer_models.xlm_model import (
+                    XLMForSequenceClassification,
+                )
+                from simpletransformers.classification.transformer_models.xlnet_model import (
+                    XLNetForSequenceClassification,
+                )
+                from simpletransformers.classification.transformer_models.distilbert_model import (
+                    DistilBertForSequenceClassification,
+                )
+                from simpletransformers.classification.transformer_models.albert_model import (
+                    AlbertForSequenceClassification,
+                )
+                from simpletransformers.classification.transformer_models.camembert_model import (
+                    CamembertForSequenceClassification,
+                )
+                from simpletransformers.classification.transformer_models.xlm_roberta_model import (
+                    XLMRobertaForSequenceClassification,
+                )
         else:
             from transformers import (
                 AlbertForSequenceClassification,
@@ -219,42 +218,7 @@ class ClassificationModel:
 
         self.results = {}
 
-        self.args = {
-            "output_dir": "outputs/",
-            "cache_dir": "cache_dir/",
-            "fp16": True,
-            "fp16_opt_level": "O1",
-            "max_seq_length": 128,
-            "train_batch_size": 8,
-            "gradient_accumulation_steps": 1,
-            "eval_batch_size": 8,
-            "num_train_epochs": 1,
-            "weight_decay": 0,
-            "learning_rate": 4e-5,
-            "adam_epsilon": 1e-8,
-            "warmup_ratio": 0.06,
-            "warmup_steps": 0,
-            "max_grad_norm": 1.0,
-            "do_lower_case": False,
-            "logging_steps": 50,
-            "save_steps": 2000,
-            "evaluate_during_training": False,  # Only evaluate when single GPU otherwise metrics may not average well
-            "evaluate_during_training_steps": 2000,
-            "tensorboard_dir": None,
-            "overwrite_output_dir": False,
-            "reprocess_input_data": False,
-            "process_count": cpu_count() - 2 if cpu_count() > 2 else 1,
-            "n_gpu": 1,
-            "use_multiprocessing": True,
-            "silent": False,
-            # Melior paramas
-            "metric_criteria": "f1",  # Could be f1, acc, precision or mcc
-            "save_n_best_epochs": 1,  # Save just the N best models
-            "sliding_window": False,
-            "tie_value": 1,
-            "stride": 0.8,
-            "regression": False,
-        }
+        self.args = {}
 
         self.args.update(global_args)
 
@@ -501,6 +465,9 @@ class ClassificationModel:
                         "mcc": [],
                         "train_loss": [],
                         "eval_loss": [],
+                        "acc": [],
+                        "precision": [],
+                        "f1": [],
                         **extra_metrics,
                     }
                 elif self.model.num_labels == 1:
@@ -516,6 +483,9 @@ class ClassificationModel:
                         "mcc": [],
                         "train_loss": [],
                         "eval_loss": [],
+                        "acc": [],
+                        "precision": [],
+                        "f1": [],
                         **extra_metrics,
                     }
 
@@ -681,6 +651,10 @@ class ClassificationModel:
 
                 training_progress_scores["global_step"].append(global_step)
                 training_progress_scores["train_loss"].append(current_loss)
+                # import ipdb
+
+                # ipdb.set_trace()
+
                 for key in results:
                     training_progress_scores[key].append(results[key])
                 report = pd.DataFrame(training_progress_scores)
@@ -1000,20 +974,17 @@ class ClassificationModel:
         )
         f1 = f1_score(labels, preds, labels=list(set(preds)), average="weighted")
 
+        extra_metrics = {
+            "acc": acc,
+            "precision": precision,
+            "f1": f1,
+        }
+
         if self.model.num_labels == 2:
             tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
             return (
                 {
-                    **{
-                        "acc": acc,
-                        "precision": precision,
-                        "f1": f1,
-                        "mcc": mcc,
-                        "tp": tp,
-                        "tn": tn,
-                        "fp": fp,
-                        "fn": fn,
-                    },
+                    **{"mcc": mcc, "tp": tp, "tn": tn, "fp": fp, "fn": fn,},
                     **extra_metrics,
                 },
                 wrong,
@@ -1152,10 +1123,7 @@ class ClassificationModel:
                         for example in preds
                     ]
             else:
-                preds = [
-                    [self._threshold(pred, args["threshold"]) for pred in example]
-                    for example in preds
-                ]
+                preds = np.argmax(preds, axis=1)
 
         return preds, model_outputs
 
