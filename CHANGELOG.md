@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.2+melior1.1.0] - 2019-01-16
+### Added
+- `metric_criteria` and `save_n_best_epochs` parameters added. These allow to save the best model.
+
 ## [0.18.2] - 2020-01-15
 ### Added
 - Added option to turn off model saving at the end of every epoch with `save_model_every_epoch`.

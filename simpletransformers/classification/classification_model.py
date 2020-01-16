@@ -993,7 +993,7 @@ class ClassificationModel:
         else:
             return (
                 {
-                    **{"acc": acc, "precision": precision, "f1": f1, "mcc": mcc},
+                    **{"mcc": mcc},
                     **extra_metrics,
                 },
                 wrong,
