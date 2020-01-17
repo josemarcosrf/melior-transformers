@@ -4,38 +4,28 @@
 
 from __future__ import absolute_import, division, print_function
 
-import json
-import math
 import os
-import random
-import shutil
+import math
 import warnings
-from multiprocessing import cpu_count
 
+
+import torch
 import numpy as np
 import pandas as pd
 
-from scipy.stats import pearsonr, mode
-
-import torch
-from scipy.stats import mode, pearsonr
+from scipy.stats import mode
 from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    f1_score,
-    label_ranking_average_precision_score,
     matthews_corrcoef,
-    mean_squared_error,
-    precision_score,
+    confusion_matrix,
+    label_ranking_average_precision_score,
 )
 from tensorboardX import SummaryWriter
-from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-from torch.utils.data.distributed import DistributedSampler
+from tqdm.auto import trange, tqdm
+
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 
 from transformers import AdamW, get_linear_schedule_with_warmup
 from transformers import (
-    WEIGHTS_NAME,
     BertConfig,
     BertTokenizer,
     XLNetConfig,
@@ -52,43 +42,37 @@ from transformers import (
     CamembertTokenizer,
     XLMRobertaConfig,
     XLMRobertaTokenizer,
-    get_linear_schedule_with_warmup,
 )
-from tqdm.auto import tqdm, trange
 
 from melior_transformers.classification.classification_utils import (
     InputExample,
     convert_examples_to_features,
-    delete_worst_models,
-    update_results_file,
-)
-from transformers import (
-    WEIGHTS_NAME,
-    AdamW,
-    AlbertConfig,
-    AlbertForSequenceClassification,
-    AlbertTokenizer,
-    BertConfig,
-    BertForSequenceClassification,
-    BertTokenizer,
-    CamembertConfig,
-    CamembertForSequenceClassification,
-    CamembertTokenizer,
-    DistilBertConfig,
-    DistilBertForSequenceClassification,
-    DistilBertTokenizer,
-    RobertaConfig,
-    RobertaForSequenceClassification,
-    RobertaTokenizer,
-    XLMConfig,
-    XLMForSequenceClassification,
-    XLMTokenizer,
-    XLNetConfig,
-    XLNetForSequenceClassification,
-    XLNetTokenizer,
-    get_linear_schedule_with_warmup,
 )
 
+from melior_transformers.classification.transformer_models.bert_model import (
+    BertForSequenceClassification,
+)
+from melior_transformers.classification.transformer_models.roberta_model import (
+    RobertaForSequenceClassification,
+)
+from melior_transformers.classification.transformer_models.xlm_model import (
+    XLMForSequenceClassification,
+)
+from melior_transformers.classification.transformer_models.xlnet_model import (
+    XLNetForSequenceClassification,
+)
+from melior_transformers.classification.transformer_models.distilbert_model import (
+    DistilBertForSequenceClassification,
+)
+from melior_transformers.classification.transformer_models.albert_model import (
+    AlbertForSequenceClassification,
+)
+from melior_transformers.classification.transformer_models.camembert_model import (
+    CamembertForSequenceClassification,
+)
+from melior_transformers.classification.transformer_models.xlm_roberta_model import (
+    XLMRobertaForSequenceClassification,
+)
 
 from melior_transformers.config.global_args import global_args
 
@@ -117,44 +101,7 @@ class ClassificationModel:
             args (optional): Default args will be used if this parameter is not provided. If provided, it should be a dict containing the args that should be changed in the default args.
             use_cuda (optional): Use GPU if available. Setting to False will force model to use CPU only.
             cuda_device (optional): Specific GPU that should be used. Will use the first available GPU by default.
-        """
-
-        if args is not None and args.get("sliding_window", False):
-            from melior_transformers.classification.transformer_models.bert_model import (
-                BertForSequenceClassification,
-            )
-            from melior_transformers.classification.transformer_models.roberta_model import (
-                RobertaForSequenceClassification,
-            )
-            from melior_transformers.classification.transformer_models.xlm_model import (
-                XLMForSequenceClassification,
-            )
-            from melior_transformers.classification.transformer_models.xlnet_model import (
-                XLNetForSequenceClassification,
-            )
-            from melior_transformers.classification.transformer_models.distilbert_model import (
-                DistilBertForSequenceClassification,
-            )
-            from melior_transformers.classification.transformer_models.albert_model import (
-                AlbertForSequenceClassification,
-            )
-            from melior_transformers.classification.transformer_models.camembert_model import (
-                CamembertForSequenceClassification,
-            )
-            from melior_transformers.classification.transformer_models.xlm_roberta_model import (
-                XLMRobertaForSequenceClassification,
-            )
-        else:
-            from transformers import (
-                AlbertForSequenceClassification,
-                BertForSequenceClassification,
-                CamembertForSequenceClassification,
-                DistilBertForSequenceClassification,
-                RobertaForSequenceClassification,
-                XLMForSequenceClassification,
-                XLNetForSequenceClassification,
-                XLMRobertaForSequenceClassification,
-            )
+        """  # noqa: ignore flake8
 
         MODEL_CLASSES = {
             "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
@@ -202,7 +149,8 @@ class ClassificationModel:
                     self.device = torch.device(f"cuda:{cuda_device}")
             else:
                 raise ValueError(
-                    "'use_cuda' set to True when cuda is unavailable. Make sure CUDA is available or set use_cuda=False."
+                    "'use_cuda' set to True when cuda is unavailable. Make sure CUDA is"
+                    "available or set use_cuda=False."
                 )
         else:
             self.device = "cpu"
@@ -218,7 +166,12 @@ class ClassificationModel:
 
         self.results = {}
 
-        self.args = {}
+        self.args = {
+            "sliding_window": False,
+            "tie_value": 1,
+            "stride": 0.8,
+            "regression": False,
+        }
 
         self.args.update(global_args)
 
@@ -237,7 +190,8 @@ class ClassificationModel:
 
         if model_type in ["camembert", "xlmroberta"]:
             warnings.warn(
-                f"use_multiprocessing automatically disabled as {model_type} fails when using multiprocessing for feature conversion."
+                f"use_multiprocessing automatically disabled as {model_type} fails"
+                "when using multiprocessing for feature conversion."
             )
             self.args["use_multiprocessing"] = False
 
@@ -266,7 +220,7 @@ class ClassificationModel:
 
         Returns:
             None
-        """
+        """  # noqa: ignore flake8
 
         if args:
             self.args.update(args)
@@ -276,7 +230,9 @@ class ClassificationModel:
 
         if self.args["evaluate_during_training"] and eval_df is None:
             raise ValueError(
-                "evaluate_during_training is enabled but eval_df is not specified. Pass eval_df to model.train_model() if using evaluate_during_training."
+                "evaluate_during_training is enabled but eval_df is not specified."
+                " Pass eval_df to model.train_model() if using"
+                "evaluate_during_training."
             )
 
         if not output_dir:
@@ -288,12 +244,9 @@ class ClassificationModel:
             and not self.args["overwrite_output_dir"]
         ):
             raise ValueError(
-                "Output directory ({}) already exists and is not empty. Use --overwrite_output_dir to overcome.".format(
-                    output_dir
-                )
+                "Output directory ({}) already exists and is not empty."
+                "Use --overwrite_output_dir to overcome.".format(output_dir)
             )
-        # else:
-        #         shutil.rmtree(output_dir)
 
         self._move_model_to_device()
 
@@ -313,7 +266,8 @@ class ClassificationModel:
             ]
         else:
             warnings.warn(
-                "Dataframe headers not specified. Falling back to using column 0 as text and column 1 as labels."
+                "Dataframe headers not specified. Falling back to using column"
+                " 0 as text and column 1 as labels."
             )
             train_examples = [
                 InputExample(i, text, None, label)
@@ -336,18 +290,11 @@ class ClassificationModel:
             **kwargs,
         )
 
-        if not self.args["evaluate_during_training"]:
-            model_to_save = (
-                self.model.module if hasattr(self.model, "module") else self.model
-            )
-            model_to_save.save_pretrained(output_dir)
-            self.tokenizer.save_pretrained(output_dir)
-            print(
-                "Training of {} model complete. Saved to {}.".format(
-                    self.args["model_type"], output_dir
-                )
-            )
-
+        model_to_save = (
+            self.model.module if hasattr(self.model, "module") else self.model
+        )
+        model_to_save.save_pretrained(output_dir)
+        self.tokenizer.save_pretrained(output_dir)
         torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
 
         print(
@@ -368,10 +315,10 @@ class ClassificationModel:
         """
         Trains the model on train_dataset.
 
-        Utility function to be used by the train_model() method. Not intended to be used directly.
+        Utility function to be used by the train_model() method. Not intended"
+        "to be used directly.
         """
 
-        tokenizer = self.tokenizer
         device = self.device
         model = self.model
         args = self.args
@@ -427,7 +374,8 @@ class ClassificationModel:
                 from apex import amp
             except ImportError:
                 raise ImportError(
-                    "Please install apex from https://www.github.com/nvidia/apex to use fp16 training."
+                    "Please install apex from https://www.github.com/nvidia/apex "
+                    "to use fp16 training."
                 )
 
             model, optimizer = amp.initialize(
@@ -465,9 +413,6 @@ class ClassificationModel:
                         "mcc": [],
                         "train_loss": [],
                         "eval_loss": [],
-                        "acc": [],
-                        "precision": [],
-                        "f1": [],
                         **extra_metrics,
                     }
                 elif self.model.num_labels == 1:
@@ -483,9 +428,6 @@ class ClassificationModel:
                         "mcc": [],
                         "train_loss": [],
                         "eval_loss": [],
-                        "acc": [],
-                        "precision": [],
-                        "f1": [],
                         **extra_metrics,
                     }
 
@@ -497,6 +439,7 @@ class ClassificationModel:
 
         model.train()
         for _ in train_iterator:
+            # epoch_iterator = tqdm(train_dataloader, desc="Iteration")
             for step, batch in enumerate(
                 tqdm(train_dataloader, desc="Current iteration", disable=args["silent"])
             ):
@@ -580,7 +523,8 @@ class ClassificationModel:
                         args["evaluate_during_training_steps"] > 0
                         and global_step % args["evaluate_during_training_steps"] == 0
                     ):
-                        # Only evaluate when single GPU otherwise metrics may not average well
+                        # Only evaluate when single GPU otherwise
+                        # metrics may not average well
                         results, _, _ = self.eval_model(eval_df, verbose=True, **kwargs)
                         for key, value in results.items():
                             tb_writer.add_scalar(
@@ -631,30 +575,24 @@ class ClassificationModel:
             ) and not os.path.exists(output_dir_current):
                 os.makedirs(output_dir_current)
 
-            if args["save_model_every_epoch"]:
+            if (
+                args["save_model_every_epoch"]
+                and epoch_number != args["num_train_epochs"]
+            ):
                 model_to_save = model.module if hasattr(model, "module") else model
                 model_to_save.save_pretrained(output_dir_current)
                 self.tokenizer.save_pretrained(output_dir_current)
 
             if args["evaluate_during_training"]:
                 results, _, _ = self.eval_model(eval_df, verbose=True, **kwargs)
-                # Save epoch resuls
-                epoch_results_path = os.path.join(
-                    output_dir_current, "eval_results.json"
-                )
-                update_results_file(results, epoch_results_path, output_dir_current)
-                # Update all_results
-                results_path = os.path.join(output_dir, "all_eval_results.json")
-                update_results_file(results, results_path, output_dir_current)
-                if args["save_n_best_epochs"] != 0:
-                    delete_worst_models(args, results_path)
+
+                output_eval_file = os.path.join(output_dir_current, "eval_results.txt")
+                with open(output_eval_file, "w") as writer:
+                    for key in sorted(results.keys()):
+                        writer.write("{} = {}\n".format(key, str(results[key])))
 
                 training_progress_scores["global_step"].append(global_step)
                 training_progress_scores["train_loss"].append(current_loss)
-                # import ipdb
-
-                # ipdb.set_trace()
-
                 for key in results:
                     training_progress_scores[key].append(results[key])
                 report = pd.DataFrame(training_progress_scores)
@@ -682,7 +620,7 @@ class ClassificationModel:
             result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)
             model_outputs: List of model outputs for each row in eval_df
             wrong_preds: List of InputExample objects corresponding to each incorrect prediction by the model
-        """
+        """  # noqa: ignore flake8
 
         if not output_dir:
             output_dir = self.args["output_dir"]
@@ -703,10 +641,10 @@ class ClassificationModel:
         """
         Evaluates the model on eval_df.
 
-        Utility function to be used by the eval_model() method. Not intended to be used directly.
+        Utility function to be used by the eval_model() method. Not intended to
+        be used directly.
         """
 
-        tokenizer = self.tokenizer
         device = self.device
         model = self.model
         args = self.args
@@ -730,7 +668,8 @@ class ClassificationModel:
             ]
         else:
             warnings.warn(
-                "Dataframe headers not specified. Falling back to using column 0 as text and column 1 as labels."
+                "Dataframe headers not specified."
+                " Falling back to using column 0 as text and column 1 as labels."
             )
             eval_examples = [
                 InputExample(i, text, None, label)
@@ -744,14 +683,7 @@ class ClassificationModel:
                 eval_examples, evaluate=True
             )
         else:
-            eval_examples = [
-                InputExample(i, text, None, label)
-                for i, (text, label) in enumerate(
-                    zip(eval_df.iloc[:, 0], eval_df.iloc[:, 1])
-                )
-            ]
-
-        eval_dataset = self.load_and_cache_examples(eval_examples, evaluate=True)
+            eval_dataset = self.load_and_cache_examples(eval_examples, evaluate=True)
         if not os.path.exists(eval_output_dir):
             os.makedirs(eval_output_dir)
 
@@ -820,14 +752,14 @@ class ClassificationModel:
                 else:
                     final_preds.append(mode_pred[0])
             preds = np.array(final_preds)
-        elif not multi_label and args["regression"] == True:
+        elif not multi_label and args["regression"] is True:
             preds = np.squeeze(preds)
             model_outputs = preds
         else:
             model_outputs = preds
 
-        if not multi_label:
-            preds = np.argmax(preds, axis=1)
+            if not multi_label:
+                preds = np.argmax(preds, axis=1)
 
         result, wrong = self.compute_metrics(
             preds, out_label_ids, eval_examples, **kwargs
@@ -846,9 +778,11 @@ class ClassificationModel:
         self, examples, evaluate=False, no_cache=False, multi_label=False
     ):
         """
-        Converts a list of InputExample objects to a TensorDataset containing InputFeatures. Caches the InputFeatures.
+        Converts a list of InputExample objects to a TensorDataset containing
+        InputFeatures. Caches the InputFeatures.
 
-        Utility function for train() and eval() methods. Not intended to be used directly.
+        Utility function for train() and eval() methods. Not intended to be
+        used directly.
         """
 
         process_count = self.args["process_count"]
@@ -894,7 +828,8 @@ class ClassificationModel:
                 cls_token=tokenizer.cls_token,
                 cls_token_segment_id=2 if args["model_type"] in ["xlnet"] else 0,
                 sep_token=tokenizer.sep_token,
-                # RoBERTa uses an extra separator b/w pairs of sentences, cf. github.com/pytorch/fairseq/commit/1684e166e3da03f5b600dbb7855cb98ddfcd0805
+                # RoBERTa uses an extra separator b/w pairs of sentences, cf.
+                # github.com/pytorch/fairseq/commit/1684e166e3da03f5b600dbb7855cb98ddfcd0805 # noqa: ignore flake8
                 sep_token_extra=bool(args["model_type"] in ["roberta"]),
                 # PAD on the left for XLNet
                 pad_on_left=bool(args["model_type"] in ["xlnet"]),
@@ -904,11 +839,17 @@ class ClassificationModel:
                 multi_label=multi_label,
                 silent=args["silent"],
                 use_multiprocessing=args["use_multiprocessing"],
+                sliding_window=args["sliding_window"],
                 flatten=not evaluate,
+                stride=args["stride"],
             )
 
             if not no_cache:
                 torch.save(features, cached_features_file)
+
+        if args["sliding_window"] and evaluate:
+            window_counts = [len(sample) for sample in features]
+            features = [feature for feature_set in features for feature in feature_set]
 
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
         all_input_mask = torch.tensor(
@@ -931,7 +872,10 @@ class ClassificationModel:
             all_input_ids, all_input_mask, all_segment_ids, all_label_ids
         )
 
-        return dataset
+        if args["sliding_window"] and evaluate:
+            return dataset, window_counts
+        else:
+            return dataset
 
     def compute_metrics(
         self, preds, labels, eval_examples, multi_label=False, **kwargs
@@ -949,7 +893,7 @@ class ClassificationModel:
         Returns:
             result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)
             wrong: List of InputExample objects corresponding to each incorrect prediction by the model
-        """
+        """  # noqa: ignore flake8
 
         assert len(preds) == len(labels)
 
@@ -968,47 +912,32 @@ class ClassificationModel:
             return {**extra_metrics}, wrong
 
         mcc = matthews_corrcoef(labels, preds)
-        acc = accuracy_score(labels, preds)
-        precision = precision_score(
-            labels, preds, labels=list(set(preds)), average="weighted"
-        )
-        f1 = f1_score(labels, preds, labels=list(set(preds)), average="weighted")
-
-        extra_metrics = {
-            "acc": acc,
-            "precision": precision,
-            "f1": f1,
-        }
 
         if self.model.num_labels == 2:
             tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
             return (
                 {
-                    **{"mcc": mcc, "tp": tp, "tn": tn, "fp": fp, "fn": fn,},
+                    **{"mcc": mcc, "tp": tp, "tn": tn, "fp": fp, "fn": fn},
                     **extra_metrics,
                 },
                 wrong,
             )
-
         else:
-            return (
-                {**{"mcc": mcc}, **extra_metrics,},
-                wrong,
-            )
+            return {**{"mcc": mcc}, **extra_metrics}, wrong
 
     def predict(self, to_predict, multi_label=False):
         """
         Performs predictions on a list of text.
 
         Args:
-            to_predict: A python list of text (str) to be sent to the model for prediction.
+            to_predict: A python list of text (str) to be sent to the model
+            for prediction.
 
         Returns:
             preds: A python list of the predictions (0 or 1) for each text.
             model_outputs: A python list of the raw model outputs for each text.
         """
 
-        tokenizer = self.tokenizer
         device = self.device
         model = self.model
         args = self.args
@@ -1099,7 +1028,7 @@ class ClassificationModel:
                 else:
                     final_preds.append(mode_pred[0])
             preds = np.array(final_preds)
-        elif not multi_label and args["regression"] == True:
+        elif not multi_label and args["regression"] is True:
             preds = np.squeeze(preds)
             model_outputs = preds
         else:

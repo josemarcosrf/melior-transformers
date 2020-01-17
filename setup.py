@@ -42,6 +42,7 @@ setup(
         "seqeval",
         "tensorboardx",
         "wandb",
-        "pandas"
+        "pandas",
+        "torch=1.3.1"
     ],
 )

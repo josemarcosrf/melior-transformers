@@ -1,7 +1,5 @@
 import torch
 
-from multiprocessing import cpu_count
-
 from melior_transformers.classification import ClassificationModel
 from melior_transformers.custom_models.models import (
     BertForMultiLabelSequenceClassification,
@@ -14,7 +12,6 @@ from melior_transformers.custom_models.models import (
 from melior_transformers.config.global_args import global_args
 
 from transformers import (
-    WEIGHTS_NAME,
     BertConfig,
     BertTokenizer,
     XLNetConfig,
@@ -50,7 +47,7 @@ class MultiLabelClassificationModel(ClassificationModel):
             pos_weight (optional): A list of length num_labels containing the weights to assign to each label for loss calculation.
             args (optional): Default args will be used if this parameter is not provided. If provided, it should be a dict containing the args that should be changed in the default args.
             use_cuda (optional): Use GPU if available. Setting to False will force model to use CPU only.
-        """
+        """  # noqa: ignore flake8
         MODEL_CLASSES = {
             "bert": (
                 BertConfig,
@@ -96,7 +93,8 @@ class MultiLabelClassificationModel(ClassificationModel):
                 self.device = torch.device("cuda")
             else:
                 raise ValueError(
-                    "'use_cuda' set to True when cuda is unavailable. Make sure CUDA is available or set use_cuda=False."
+                    "'use_cuda' set to True when cuda is unavailable."
+                    "Make sure CUDA is available or set use_cuda=False."
                 )
         else:
             self.device = "cpu"

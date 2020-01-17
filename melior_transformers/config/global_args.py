@@ -21,7 +21,8 @@ global_args = {
     "logging_steps": 50,
     "save_steps": 2000,
     "save_model_every_epoch": True,
-    "evaluate_during_training": False,  # Only evaluate when single GPU otherwise metrics may not average well
+    # Only evaluate when single GPU otherwise metrics may not average well
+    "evaluate_during_training": False,
     "evaluate_during_training_steps": 2000,
     "use_cached_eval_features": False,
     "tensorboard_dir": None,
