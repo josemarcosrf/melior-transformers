@@ -12,6 +12,7 @@ from melior_transformers.custom_models.models import (
 from melior_transformers.config.global_args import global_args
 
 from transformers import (
+    WEIGHTS_NAME,
     BertConfig,
     BertTokenizer,
     XLNetConfig,

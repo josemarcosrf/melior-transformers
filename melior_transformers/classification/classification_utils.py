@@ -412,3 +412,40 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
             tokens_a.pop()
         else:
             tokens_b.pop()
+
+
+def read_json(file_path):
+    with open(file_path) as json_file:
+        data = json.load(json_file)
+    return data
+
+
+def write_json(file_path, data, encoding="utf8"):
+    with open(file_path, "w") as outfile:
+        json.dump(data, outfile, ensure_ascii=False, indent=4)
+
+
+def update_results_file(results, results_path, output_dir_current):
+    if os.path.exists(results_path):
+        dicc = read_json(results_path)
+    else:
+        dicc = {}
+    dicc[os.path.basename(output_dir_current)] = results
+    write_json(results_path, dicc)
+
+
+def delete_worst_models(args, results_path):
+    results_list = []
+    results_dict = read_json(results_path)
+    # Save to list
+    for result in results_dict.keys():
+        metric_val = results_dict[result][args["metric_criteria"]]
+        results_list.append([result, metric_val])
+    print(results_list)
+    # Sort results
+    results_list.sort(key=lambda x: x[1], reverse=True)
+    # Delete worst epochs
+    for item in results_list[int(args["save_n_best_epochs"]) :]:
+        epoch_path = os.path.join(args["output_dir"], item[0])
+        if os.path.exists(epoch_path):
+            shutil.rmtree(epoch_path)

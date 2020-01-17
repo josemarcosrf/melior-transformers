@@ -95,13 +95,56 @@ class ClassificationModel:
 
         Args:
             model_type: The type of model (bert, xlnet, xlm, roberta, distilbert)
-            model_name: Default Transformer model name or path to a directory containing Transformer model file (pytorch_nodel.bin).
+            model_name: Default Transformer model name or path to a directory containing
+             Transformer model file (pytorch_nodel.bin).
             num_labels (optional): The number of labels or classes in the dataset.
-            weight (optional): A list of length num_labels containing the weights to assign to each label for loss calculation.
-            args (optional): Default args will be used if this parameter is not provided. If provided, it should be a dict containing the args that should be changed in the default args.
-            use_cuda (optional): Use GPU if available. Setting to False will force model to use CPU only.
-            cuda_device (optional): Specific GPU that should be used. Will use the first available GPU by default.
-        """  # noqa: ignore flake8
+             weight (optional): A list of length num_labels containing the weights to
+            assign to each label for loss calculation.
+            args (optional): Default args will be used if this parameter
+             is not provided. If provided, it should be a dict containing the args that
+             should be changed in the default args.
+            use_cuda (optional): Use GPU if available. Setting to False will
+             force model to use CPU only.
+            cuda_device (optional): Specific GPU that should be used.
+             Will use the first available GPU by default.
+        """
+
+        if args is not None and args.get("sliding_window", False):
+            from melior_transformers.classification.transformer_models.bert_model import (
+                BertForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.roberta_model import (
+                RobertaForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.xlm_model import (
+                XLMForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.xlnet_model import (
+                XLNetForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.distilbert_model import (
+                DistilBertForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.albert_model import (
+                AlbertForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.camembert_model import (
+                CamembertForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.xlm_roberta_model import (
+                XLMRobertaForSequenceClassification,
+            )
+        else:
+            from transformers import (
+                AlbertForSequenceClassification,
+                BertForSequenceClassification,
+                CamembertForSequenceClassification,
+                DistilBertForSequenceClassification,
+                RobertaForSequenceClassification,
+                XLMForSequenceClassification,
+                XLNetForSequenceClassification,
+                XLMRobertaForSequenceClassification,
+            )
 
         MODEL_CLASSES = {
             "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
@@ -912,6 +955,13 @@ class ClassificationModel:
             return {**extra_metrics}, wrong
 
         mcc = matthews_corrcoef(labels, preds)
+        acc = accuracy_score(labels, preds)
+        precision = precision_score(
+            labels, preds, labels=list(set(preds)), average="weighted"
+        )
+        f1 = f1_score(labels, preds, labels=list(set(preds)), average="weighted")
+
+        extra_metrics = {"acc": acc, "precision": precision, "f1": f1}
 
         if self.model.num_labels == 2:
             tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
@@ -923,7 +973,7 @@ class ClassificationModel:
                 wrong,
             )
         else:
-            return {**{"mcc": mcc}, **extra_metrics}, wrong
+            return ({**{"mcc": mcc}, **extra_metrics}, wrong)
 
     def predict(self, to_predict, multi_label=False):
         """

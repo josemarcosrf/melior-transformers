@@ -80,7 +80,7 @@ def read_examples_from_file(data_file, mode):
         if words:
             examples.append(
                 InputExample(
-                    guid="%s-%d".format(mode, guid_index), words=words, labels=labels
+                    guid="{}-{}".format(mode, guid_index), words=words, labels=labels
                 )
             )
     return examples
