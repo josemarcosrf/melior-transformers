@@ -120,30 +120,30 @@ class ClassificationModel:
         """
 
         if args is not None and args.get("sliding_window", False):
-                from melior_transformers.classification.transformer_models.bert_model import (
-                    BertForSequenceClassification,
-                )
-                from melior_transformers.classification.transformer_models.roberta_model import (
-                    RobertaForSequenceClassification,
-                )
-                from melior_transformers.classification.transformer_models.xlm_model import (
-                    XLMForSequenceClassification,
-                )
-                from melior_transformers.classification.transformer_models.xlnet_model import (
-                    XLNetForSequenceClassification,
-                )
-                from melior_transformers.classification.transformer_models.distilbert_model import (
-                    DistilBertForSequenceClassification,
-                )
-                from melior_transformers.classification.transformer_models.albert_model import (
-                    AlbertForSequenceClassification,
-                )
-                from melior_transformers.classification.transformer_models.camembert_model import (
-                    CamembertForSequenceClassification,
-                )
-                from melior_transformers.classification.transformer_models.xlm_roberta_model import (
-                    XLMRobertaForSequenceClassification,
-                )
+            from melior_transformers.classification.transformer_models.bert_model import (
+                BertForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.roberta_model import (
+                RobertaForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.xlm_model import (
+                XLMForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.xlnet_model import (
+                XLNetForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.distilbert_model import (
+                DistilBertForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.albert_model import (
+                AlbertForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.camembert_model import (
+                CamembertForSequenceClassification,
+            )
+            from melior_transformers.classification.transformer_models.xlm_roberta_model import (
+                XLMRobertaForSequenceClassification,
+            )
         else:
             from transformers import (
                 AlbertForSequenceClassification,
@@ -992,10 +992,7 @@ class ClassificationModel:
 
         else:
             return (
-                {
-                    **{"mcc": mcc},
-                    **extra_metrics,
-                },
+                {**{"mcc": mcc}, **extra_metrics,},
                 wrong,
             )
 
