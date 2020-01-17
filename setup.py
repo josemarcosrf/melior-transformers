@@ -1,3 +1,4 @@
+import os
 from setuptools import find_packages, setup
 
 
@@ -15,7 +16,7 @@ with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="melior_transformers",
-    version="0.18.2+melior1.1.0",,
+    version="0.18.2+melior1.1.0",
     author="MeliorAI",
     author_email="flavius@melior.ai",
     description="An easy-to-use wrapper library for the Transformers library.",
@@ -24,10 +25,10 @@ setup(
     url="https://github.com/MeliorAI/meliorTransformers/",
     packages=find_packages(),
     classifiers=[
-          "Intended Audience :: Science/Research",
-          "License :: OSI Approved :: Apache Software License",
-          "Programming Language :: Python :: 3",
-          "Topic :: Scientific/Engineering :: Artificial Intelligence",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     python_requires=">=3.6",
     install_requires=[
