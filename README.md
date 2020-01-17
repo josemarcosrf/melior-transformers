@@ -1,25 +1,32 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-<!-- [![Downloads](https://pepy.tech/badge/simpletransformers)](https://pepy.tech/project/simpletransformers) -->
 
-# Simple Transformers
+# Melior Transformers
 
-This library is based on
-[simpleTransformers](https://github.com/ThilinaRajapakse/simpletransformers)
-which in turn is based on the
+This library is based on [simpleTransformers](https://github.com/ThilinaRajapakse/simpletransformers) which in turn is based on the
 [Transformers](https://github.com/huggingface/transformers) library by HuggingFace.
 
-We aim to expand the capabilities of the Transformers library so it can be used
-beyond classification. Providing a unified interface to using Transformers as
-a tool for _Semantic Search_, _Spellcheck correction_ or _Entity Extraction_ in
+
+
+⚠ This library is still under development! If you want to use it expect rough edges ⚠
+
+
+
+The motivation to create yet another version of the Transformers library is so that it can be used
+beyond classification. 
+We aim to provide a unified interface to using Transformers as
+a tool for _Semantic Search_, _Spell-check correction_ or _Entity Extraction_ in
 a easy and extensible way.
 
-In addition we want to make it productionready, well tested
-and accesible via different interfaces for containarized and cloud environments.
-
+In addition we want to make it production ready, well tested
+and accessible via different interfaces for containerized and cloud environments.
 
 -------------------------
 
-The original simpleTransformers README follows:
+
+
+**The original simpleTransformers README follows:**
+
+
 
 Simple Transformers lets you quickly train and evaluate Transformer models.
 Only 3 lines of code are needed to initialize a model, train the model, and evaluate a model.
@@ -78,7 +85,7 @@ else:
 
 ## Usage
 
-Most available hyperparameters are common for all tasks. Any special hyperparameters will be listed in the docs section for the corresponding class. See [Default Settings](#default-settings) and [Args Explained](#args-explained) sections for more information.
+Most available hyper-parameters are common for all tasks. Any special hyper-parameters will be listed in the docs section for the corresponding class. See [Default Settings](#default-settings) and [Args Explained](#args-explained) sections for more information.
 
 Example scripts can be found in the `examples` directory.
 
@@ -1119,11 +1126,14 @@ The table below shows the currently available model types and their models. You 
 | ALBERT      | albert | albert-xxlarge-v2 | 12 repeating layer, 128 embedding, 4096-hidden, 64-heads, 223M parameters; ALBERT xxlarge model with no dropout, additional training data and longer training |
 | CamemBERT     | camembert | camembert-base | 12-layer, 768-hidden, 12-heads, 110M parameters CamemBERT using the RoBERTa architecture |
 
-
 ---
+
+
 
 ## Acknowledgements
 
-None of this would have been possible without the hard work by the HuggingFace team in developing the [Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers) library.
 
-_<div>Icon for the Social Media Preview made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>_
+
+- To [ThilinaRajapakse](https://github.com/ThilinaRajapakse) for his library [simpleTransformers](https://github.com/ThilinaRajapakse/simpletransformers) from which this has been bootstrapped.
+
+-  To the HuggingFace team in developing the [Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers) library.

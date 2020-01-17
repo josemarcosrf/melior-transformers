@@ -41,6 +41,7 @@ setup(
         "scikit-learn",
         "seqeval",
         "tensorboardx",
-        "wandb"
+        "wandb",
+        "pandas"
     ],
 )
