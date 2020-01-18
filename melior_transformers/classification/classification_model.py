@@ -49,31 +49,6 @@ from melior_transformers.classification.classification_utils import (
     convert_examples_to_features,
 )
 
-from melior_transformers.classification.transformer_models.bert_model import (
-    BertForSequenceClassification,
-)
-from melior_transformers.classification.transformer_models.roberta_model import (
-    RobertaForSequenceClassification,
-)
-from melior_transformers.classification.transformer_models.xlm_model import (
-    XLMForSequenceClassification,
-)
-from melior_transformers.classification.transformer_models.xlnet_model import (
-    XLNetForSequenceClassification,
-)
-from melior_transformers.classification.transformer_models.distilbert_model import (
-    DistilBertForSequenceClassification,
-)
-from melior_transformers.classification.transformer_models.albert_model import (
-    AlbertForSequenceClassification,
-)
-from melior_transformers.classification.transformer_models.camembert_model import (
-    CamembertForSequenceClassification,
-)
-from melior_transformers.classification.transformer_models.xlm_roberta_model import (
-    XLMRobertaForSequenceClassification,
-)
-
 from melior_transformers.config.global_args import global_args
 
 import wandb
@@ -110,28 +85,28 @@ class ClassificationModel:
         """
 
         if args is not None and args.get("sliding_window", False):
-            from melior_transformers.classification.transformer_models.bert_model import (
+            from melior_transformers.classification.transformer_models.bert_model import (  # noqa: E501
                 BertForSequenceClassification,
             )
-            from melior_transformers.classification.transformer_models.roberta_model import (
+            from melior_transformers.classification.transformer_models.roberta_model import (  # noqa: E501
                 RobertaForSequenceClassification,
             )
-            from melior_transformers.classification.transformer_models.xlm_model import (
+            from melior_transformers.classification.transformer_models.xlm_model import (  # noqa: E501
                 XLMForSequenceClassification,
             )
-            from melior_transformers.classification.transformer_models.xlnet_model import (
+            from melior_transformers.classification.transformer_models.xlnet_model import (  # noqa: E501
                 XLNetForSequenceClassification,
             )
-            from melior_transformers.classification.transformer_models.distilbert_model import (
+            from melior_transformers.classification.transformer_models.distilbert_model import (  # noqa: E501
                 DistilBertForSequenceClassification,
             )
-            from melior_transformers.classification.transformer_models.albert_model import (
+            from melior_transformers.classification.transformer_models.albert_model import (  # noqa: E501
                 AlbertForSequenceClassification,
             )
-            from melior_transformers.classification.transformer_models.camembert_model import (
+            from melior_transformers.classification.transformer_models.camembert_model import (  # noqa: E501
                 CamembertForSequenceClassification,
             )
-            from melior_transformers.classification.transformer_models.xlm_roberta_model import (
+            from melior_transformers.classification.transformer_models.xlm_roberta_model import (  # noqa: E501
                 XLMRobertaForSequenceClassification,
             )
         else:
@@ -652,18 +627,31 @@ class ClassificationModel:
         Evaluates the model on eval_df. Saves results to output_dir.
 
         Args:
-            eval_df: Pandas Dataframe containing at least two columns. If the Dataframe has a header, it should contain a 'text' and a 'labels' column. If no header is present,
-            the Dataframe should contain at least two columns, with the first column containing the text, and the second column containing the label. The model will be evaluated on this Dataframe.
-            output_dir: The directory where model files will be saved. If not given, self.args['output_dir'] will be used.
-            verbose: If verbose, results will be printed to the console on completion of evaluation.
-            **kwargs: Additional metrics that should be used. Pass in the metrics as keyword arguments (name of metric: function to use). E.g. f1=sklearn.metrics.f1_score.
-                        A metric function should take in two parameters. The first parameter will be the true labels, and the second parameter will be the predictions.
+            eval_df: Pandas Dataframe containing at least two columns.
+             If the Dataframe has a header, it should contain a
+             'text' and a 'labels' column. If no header is present,
+             the Dataframe should contain at least two columns,
+              with the first column containing the text, and the second
+              column containing the label. The model will be evaluated
+              on this Dataframe.
+            output_dir: The directory where model files will be saved.
+             If not given, self.args['output_dir'] will be used.
+            verbose: If verbose, results will be printed to the console
+             on completion of evaluation.
+            **kwargs: Additional metrics that should be used.
+             Pass in the metrics as keyword arguments (name of metric: function to use).
+             E.g. f1=sklearn.metrics.f1_score.
+             A metric function should take in two parameters.
+             The first parameter will be the true labels, and the second parameter
+             will be the predictions.
 
         Returns:
-            result: Dictionary containing evaluation results. (Matthews correlation coefficient, tp, tn, fp, fn)
+            result: Dictionary containing evaluation results.
+             (Matthews correlation coefficient, tp, tn, fp, fn)
             model_outputs: List of model outputs for each row in eval_df
-            wrong_preds: List of InputExample objects corresponding to each incorrect prediction by the model
-        """  # noqa: ignore flake8
+            wrong_preds: List of InputExample objects corresponding to each
+            incorrect prediction by the model
+        """
 
         if not output_dir:
             output_dir = self.args["output_dir"]
@@ -955,13 +943,14 @@ class ClassificationModel:
             return {**extra_metrics}, wrong
 
         mcc = matthews_corrcoef(labels, preds)
-        acc = accuracy_score(labels, preds)
-        precision = precision_score(
-            labels, preds, labels=list(set(preds)), average="weighted"
-        )
-        f1 = f1_score(labels, preds, labels=list(set(preds)), average="weighted")
 
-        extra_metrics = {"acc": acc, "precision": precision, "f1": f1}
+        # acc = accuracy_score(labels, preds)
+        # precision = precision_score(
+        #     labels, preds, labels=list(set(preds)), average="weighted"
+        # )
+        # f1 = f1_score(labels, preds, labels=list(set(preds)), average="weighted")
+
+        # extra_metrics = {"acc": acc, "precision": precision, "f1": f1}
 
         if self.model.num_labels == 2:
             tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
