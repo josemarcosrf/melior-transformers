@@ -3,8 +3,8 @@
 
 # Melior Transformers
 
-This library is based on [simpleTransformers](simple-transformers)
- which in turn is based on the [Transformers](pytorch-transformers)
+This library is based on [simpleTransformers](https://github.com/ThilinaRajapakse/simpletransformers)
+ which in turn is based on the [Transformers](https://github.com/huggingface/pytorch-transformers)
  library by HuggingFace.
 
 We are also integrsting other implementations and libraries of Transformers
@@ -1144,17 +1144,9 @@ The table below shows the currently available model types and their models. You 
 
 
 - :raised_hands: To [ThilinaRajapakse](https://github.com/ThilinaRajapakse) for his library
-    [simpleTransformers](simple-transformers) from which this has been bootstrapped.
+    [simpleTransformers](https://github.com/ThilinaRajapakse/simpletransformers) from which this has been bootstrapped.
 
-- :raised_hands: To the HuggingFace team in developing the [Pytorch-Transformers](pytorch-transformers) library.
+- :raised_hands: To the HuggingFace team in developing the [Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers) library.
 
 - :raised_hands: UKPlabs for their [sentence-transformers](https://github.com/UKPLab/sentence-transformers)
   library and pre-trained models
-
-
-
-
-
-
-[simple-transformers]: https://github.com/ThilinaRajapakse/simpletransformers
-[pytorch-transformers]: https://github.com/huggingface/pytorch-transformers
