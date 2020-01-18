@@ -16,7 +16,7 @@ with open(os.path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="melior_transformers",
-    version="0.18.2+melior1.1.0",
+    version=__version__,
     author="MeliorAI",
     author_email="flavius@melior.ai",
     description="An easy-to-use wrapper library for the Transformers library.",
@@ -32,17 +32,19 @@ setup(
     ],
     python_requires=">=3.6",
     install_requires=[
-        "numpy",
+        "torch==1.3.1",
+        "tqdm==4.41.1",
+        "transformers==2.3.0",
+        "numpy==1.18.1",
+        "pandas==0.25.3",
+        "seqeval==0.0.12",
+        "scipy==1.4.1",
+        "apex==0.9.10dev",
+        "scikit_learn==0.22.1",
+        "tensorboardX==2.0",
+        "wandb==0.8.21",
         "requests",
-        "tqdm",
         "regex",
-        "transformers",
-        "scipy",
-        "scikit-learn",
-        "seqeval",
-        "tensorboardx",
         "wandb",
-        "pandas",
-        "torch=1.3.1"
     ],
 )
