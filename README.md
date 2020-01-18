@@ -14,11 +14,8 @@ under the same hood. Currently we also have:
   to extract sentence embeddings easily using their pre-trained models.
 
 
-:warning:
-
-This library is still under development! If you want to use it expect rough edges
-
-:warning:
+:warning: :construction_worker: This library is still under development!
+If you want to use it expect rough edges :warning:
 
 
 
