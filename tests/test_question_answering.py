@@ -1,6 +1,8 @@
-from melior_transformers.question_answering import QuestionAnsweringModel
+import pytest
 import json
 import os
+
+from melior_transformers.question_answering import QuestionAnsweringModel
 
 
 def test_question_answering():
