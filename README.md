@@ -3,17 +3,27 @@
 
 # Melior Transformers
 
-This library is based on [simpleTransformers](https://github.com/ThilinaRajapakse/simpletransformers) which in turn is based on the
-[Transformers](https://github.com/huggingface/transformers) library by HuggingFace.
+This library is based on [simpleTransformers](simple-transformers)
+ which in turn is based on the [Transformers](pytorch-transformers)
+ library by HuggingFace.
+
+We are also integrsting other implementations and libraries of Transformers
+under the same hood. Currently we also have:
+
+- UKPlab's [sentence-transformers](https://github.com/UKPLab/sentence-transformers)
+  to extract sentence embeddings easily using their pre-trained models.
+
+
+:warning:
+
+This library is still under development! If you want to use it expect rough edges
+
+:warning:
 
 
 
-⚠ This library is still under development! If you want to use it expect rough edges ⚠
-
-
-
-The motivation to create yet another version of the Transformers library is so that it can be used
-beyond classification. 
+The motivation to create yet another version of the Transformers library is so
+that it can be used beyond classification.
 We aim to provide a unified interface to using Transformers as
 a tool for _Semantic Search_, _Spell-check correction_ or _Entity Extraction_ in
 a easy and extensible way.
@@ -123,7 +133,7 @@ Supported model types:
 
 ### Task Specific Notes
 
-* Set `'sliding_window': True` in `args` to prevent text being truncated. The default *stride* is `'stride': 0.8` which is `0.8 * max_seq_length`. Training text will be split using a sliding window and each window will be assigned the label from the original text. During evaluation and prediction, the mode of the predictions for each window will be the final prediction on each sample. The `tie_value` (default `1`) will be used in the case of a tie.  
+* Set `'sliding_window': True` in `args` to prevent text being truncated. The default *stride* is `'stride': 0.8` which is `0.8 * max_seq_length`. Training text will be split using a sliding window and each window will be assigned the label from the original text. During evaluation and prediction, the mode of the predictions for each window will be the final prediction on each sample. The `tie_value` (default `1`) will be used in the case of a tie.
 *Currently not available for Multilabel Classification*
 
 #### Minimal Start for Binary Classification
@@ -1130,11 +1140,24 @@ The table below shows the currently available model types and their models. You 
 ---
 
 
+-----------------------
+
 
 ## Acknowledgements
 
 
+- :raised_hands: To [ThilinaRajapakse](https://github.com/ThilinaRajapakse) for his library
+    [simpleTransformers](simple-transformers) from which this has been bootstrapped.
 
-- To [ThilinaRajapakse](https://github.com/ThilinaRajapakse) for his library [simpleTransformers](https://github.com/ThilinaRajapakse/simpletransformers) from which this has been bootstrapped.
+- :raised_hands: To the HuggingFace team in developing the [Pytorch-Transformers](pytorch-transformers) library.
 
--  To the HuggingFace team in developing the [Pytorch-Transformers](https://github.com/huggingface/pytorch-transformers) library.
+- :raised_hands: UKPlabs for their [sentence-transformers](https://github.com/UKPLab/sentence-transformers)
+  library and pre-trained models
+
+
+
+
+
+
+[simple-transformers]: https://github.com/ThilinaRajapakse/simpletransformers
+[pytorch-transformers]: https://github.com/huggingface/pytorch-transformers
