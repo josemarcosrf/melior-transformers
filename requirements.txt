@@ -9,3 +9,4 @@ apex==0.9.10dev
 scikit_learn==0.22.1
 tensorboardX==2.0
 wandb==0.8.21
+coloredlogs==10.0

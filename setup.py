@@ -46,5 +46,6 @@ setup(
         "requests",
         "regex",
         "wandb",
+        "coloredlogs",
     ],
 )
