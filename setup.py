@@ -47,5 +47,6 @@ setup(
         "regex",
         "wandb",
         "coloredlogs",
+        "sentence-transformers==0.2.5",
     ],
 )

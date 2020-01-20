@@ -184,12 +184,7 @@ class ClassificationModel:
 
         self.results = {}
 
-        self.args = {
-            "sliding_window": False,
-            "tie_value": 1,
-            "stride": 0.8,
-            "regression": False,
-        }
+        self.args = {}
 
         self.args.update(global_args)
 
