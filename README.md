@@ -7,8 +7,10 @@ This library is based on [simpleTransformers](https://github.com/ThilinaRajapaks
  which in turn is based on the [Transformers](https://github.com/huggingface/pytorch-transformers)
  library by HuggingFace.
 
-We are also integrsting other implementations and libraries of Transformers
-under the same hood. Currently we also have:
+We are also integasting other implementations and libraries of Transformers
+under the same hood. 
+
+Currently we have:
 
 - UKPlab's [sentence-transformers](https://github.com/UKPLab/sentence-transformers)
   to extract sentence embeddings easily using their pre-trained models.
@@ -18,12 +20,15 @@ under the same hood. Currently we also have:
 If you want to use it expect rough edges :warning:
 
 
-
 The motivation to create yet another version of the Transformers library is so
 that it can be used beyond classification.
-We aim to provide a unified interface to using Transformers as
-a tool for _Semantic Search_, _Spell-check correction_ or _Entity Extraction_ in
-a easy and extensible way.
+We aim to provide a unified interface to using Transformers in an a easy and extensible way for things like: 
+
+- _Sentence Embeddings_ :heavy_check_mark:
+- _Spell-check correction_  :hammer_and_wrench:
+- _Entity Extraction_  :hammer_and_wrench:
+- _Sumarizartion_  :hammer_and_wrench:
+.
 
 In addition we want to make it production ready, well tested
 and accessible via different interfaces for containerized and cloud environments.
