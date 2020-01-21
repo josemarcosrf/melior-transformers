@@ -28,7 +28,6 @@ queries = [
     [
         ("bert", "bert-base-uncased"),
         ("xlnet", "xlnet-base-cased"),
-        ("xlm", "xlm-mlm-17-1280"),
         ("roberta", "roberta-base"),
         ("distilbert", "distilbert-base-uncased"),
         ("albert", "albert-base-v1"),
