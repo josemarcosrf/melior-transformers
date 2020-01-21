@@ -99,7 +99,7 @@ class SentenceEncoder:
 
     def encode(
         self, sentences: List[str], batch_size: int = 8, show_progress_bar: bool = False
-    ) -> List[ndarray]:
+    ) -> List[np.ndarray]:
         """
         Extract sentence embeddings from the selected model.
 
