@@ -12,7 +12,7 @@ from melior_transformers.classification import (
     [
         ("bert", "bert-base-uncased"),
         ("xlnet", "xlnet-base-cased"),
-        # ("xlm", "xlm-mlm-17-1280"),
+        ("xlm", "xlm-mlm-17-1280"),
         ("roberta", "roberta-base"),
         ("distilbert", "distilbert-base-uncased"),
         ("albert", "albert-base-v1"),
@@ -56,7 +56,7 @@ def test_binary_classification(model_type, model_name):
     [
         ("bert", "bert-base-uncased"),
         ("xlnet", "xlnet-base-cased"),
-        # ("xlm", "xlm-mlm-17-1280"),
+        ("xlm", "xlm-mlm-17-1280"),
         ("roberta", "roberta-base"),
         ("distilbert", "distilbert-base-uncased"),
         ("albert", "albert-base-v1"),
@@ -107,7 +107,7 @@ def test_multiclass_classification(model_type, model_name):
     [
         ("bert", "bert-base-uncased"),
         ("xlnet", "xlnet-base-cased"),
-        # ("xlm", "xlm-mlm-17-1280"),
+        ("xlm", "xlm-mlm-17-1280"),
         ("roberta", "roberta-base"),
         ("distilbert", "distilbert-base-uncased"),
         ("albert", "albert-base-v1"),

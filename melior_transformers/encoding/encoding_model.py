@@ -1,11 +1,13 @@
 import logging
 from typing import Dict, List
 
+import numpy as np
+import torch
 from numpy import ndarray
+from sentence_transformers import SentenceTransformer, models
 
 from melior_transformers.config.global_args import global_args
 from melior_transformers.encoding.constants import MODEL_CLASSES
-from sentence_transformers import SentenceTransformer, models
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ class SentenceEncoder:
         model_name: str = "bert-base-uncased",
         args: Dict = None,
         use_cuda: bool = False,
-        cuda_device=-1,
+        random_seed: int = None,
     ):
 
         """
@@ -37,11 +39,18 @@ class SentenceEncoder:
             args (optional): Aditional arguments to configure embeddigs extraction.
             use_cuda (optional): Use GPU if available. Setting to False will
              force model to use CPU only.
-            cuda_device (optional): Specific GPU that should be used.
-             Will use the first available GPU by default.
         Returns:
             None
         """
+
+        if random_seed is not None:
+            np.random.seed(random_seed)
+            torch.manual_seed(random_seed)
+
+        if use_cuda:
+            device = "cuda"
+        else:
+            device = "cpu"
 
         self.args = {
             # Model config
@@ -83,7 +92,7 @@ class SentenceEncoder:
             )
 
             self.encoder_model = SentenceTransformer(
-                modules=[word_embedding_model, pooling_model],
+                modules=[word_embedding_model, pooling_model], device=device
             )
         except Exception as e:
             raise ValueError(f"Error loading model: {e}")
@@ -105,10 +114,3 @@ class SentenceEncoder:
         return self.encoder_model.encode(
             sentences, batch_size=batch_size, show_progress_bar=show_progress_bar
         )
-
-
-if __name__ == "__main__":
-    se = SentenceEncoder("bert", "bert-base-uncased", args={"max_seq_length": 1024})
-    sentences = se.encode(["How are you?", "Are you ok?"],)
-    print(sentences[0].size)
-    print(sentences[1].size)

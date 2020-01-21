@@ -1,7 +1,10 @@
 import logging
 from typing import List
 
+import numpy as np
+import torch
 from numpy import ndarray
+from sentence_transformers import SentenceTransformer
 
 from melior_transformers.encoding.constants import (
     VALID_DATASET_NAMES,
@@ -10,7 +13,6 @@ from melior_transformers.encoding.constants import (
     VALID_MODEL_TYPES,
     VALID_POOLING_TYPES,
 )
-from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +34,8 @@ class SiameseSentenceEncoder:
         model_size: str = "base",
         dataset_name: str = "nli",
         pooling_type: str = "mean",
+        random_seed: int = None,
         use_cuda: bool = False,
-        cuda_device=-1,
     ):
         """
         Initializes a pre-trained Transformer model for Sentence Encoding.
@@ -45,11 +47,18 @@ class SiameseSentenceEncoder:
             pooling_type (optional): Pooling strategy (max, mean, cls).
             use_cuda (optional): Use GPU if available. Setting to False will
              force model to use CPU only.
-            cuda_device (optional): Specific GPU that should be used.
-             Will use the first available GPU by default.
         Returns:
             None
         """
+
+        if random_seed is not None:
+            np.random.seed(random_seed)
+            torch.manual_seed(random_seed)
+
+        if use_cuda:
+            device = "cuda"
+        else:
+            device = "cpu"
 
         if model_type not in VALID_MODEL_TYPES:
             raise ValueError(f"Model type {model_type} doesn't exist.")
@@ -72,9 +81,7 @@ class SiameseSentenceEncoder:
 
         try:
             logger.info(f"Loading model '{self.model_name}'")
-            self.model = SentenceTransformer(
-                self.model_name, use_cuda=use_cuda, cuda_device=cuda_device
-            )
+            self.model = SentenceTransformer(self.model_name, device=device)
         except Exception as e:
             raise ValueError(f"Error loading model: {e}")
 
