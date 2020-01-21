@@ -17,18 +17,16 @@
 
 from __future__ import absolute_import, division, print_function
 
-import os
-import sys
 import csv
 import logging
-
+import os
+import sys
 from io import open
 from multiprocessing import Pool, cpu_count
 
-from tqdm.auto import tqdm
 from scipy.stats import pearsonr, spearmanr
-from sklearn.metrics import matthews_corrcoef, f1_score
-
+from sklearn.metrics import f1_score, matthews_corrcoef
+from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
 csv.field_size_limit(2147483647)
@@ -68,16 +66,18 @@ class InputFeatures(object):
 
 
 def convert_example_to_feature(
-        example_row,
-        pad_token=0,
-        sequence_a_segment_id=0,
-        sequence_b_segment_id=1,
-        cls_token_segment_id=1,
-        pad_token_segment_id=0,
-        mask_padding_with_zero=True,
-        sep_token_extra=False
-    ):
-    example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label = example_row
+    example_row,
+    pad_token=0,
+    sequence_a_segment_id=0,
+    sequence_b_segment_id=1,
+    cls_token_segment_id=1,
+    pad_token_segment_id=0,
+    mask_padding_with_zero=True,
+    sep_token_extra=False,
+):
+    example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label = (
+        example_row
+    )
 
     tokens_a = tokenizer.tokenize(example.text_a)
 
@@ -93,7 +93,7 @@ def convert_example_to_feature(
         # Account for [CLS] and [SEP] with "- 2" and with "- 3" for RoBERTa.
         special_tokens_count = 3 if sep_token_extra else 2
         if len(tokens_a) > max_seq_length - special_tokens_count:
-            tokens_a = tokens_a[:(max_seq_length - special_tokens_count)]
+            tokens_a = tokens_a[: (max_seq_length - special_tokens_count)]
 
     # The convention in BERT is:
     # (a) For sequence pairs:
@@ -137,11 +137,15 @@ def convert_example_to_feature(
     padding_length = max_seq_length - len(input_ids)
     if pad_on_left:
         input_ids = ([pad_token] * padding_length) + input_ids
-        input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
+        input_mask = (
+            [0 if mask_padding_with_zero else 1] * padding_length
+        ) + input_mask
         segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
     else:
         input_ids = input_ids + ([pad_token] * padding_length)
-        input_mask = input_mask + ([0 if mask_padding_with_zero else 1] * padding_length)
+        input_mask = input_mask + (
+            [0 if mask_padding_with_zero else 1] * padding_length
+        )
         segment_ids = segment_ids + ([pad_token_segment_id] * padding_length)
 
     assert len(input_ids) == max_seq_length
@@ -159,20 +163,23 @@ def convert_example_to_feature(
         input_ids=input_ids,
         input_mask=input_mask,
         segment_ids=segment_ids,
-        label_id=example.label
+        label_id=example.label,
     )
 
+
 def convert_example_to_feature_sliding_window(
-        example_row,
-        pad_token=0,
-        sequence_a_segment_id=0,
-        sequence_b_segment_id=1,
-        cls_token_segment_id=1,
-        pad_token_segment_id=0,
-        mask_padding_with_zero=True,
-        sep_token_extra=False,
-    ):
-    example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label, stride = example_row
+    example_row,
+    pad_token=0,
+    sequence_a_segment_id=0,
+    sequence_b_segment_id=1,
+    cls_token_segment_id=1,
+    pad_token_segment_id=0,
+    mask_padding_with_zero=True,
+    sep_token_extra=False,
+):
+    example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label, stride = (
+        example_row
+    )
 
     if stride < 1:
         stride = int(max_seq_length * stride)
@@ -184,13 +191,16 @@ def convert_example_to_feature_sliding_window(
 
     special_tokens_count = 3 if sep_token_extra else 2
     if len(tokens_a) > bucket_size:
-        token_sets = [tokens_a[i:i + bucket_size] for i in range(0, len(tokens_a), stride)]
+        token_sets = [
+            tokens_a[i : i + bucket_size] for i in range(0, len(tokens_a), stride)
+        ]
     else:
         token_sets.append(tokens_a)
 
-
     if example.text_b:
-        raise ValueError("Sequence pair tasks not implemented for sliding window tokenization.")
+        raise ValueError(
+            "Sequence pair tasks not implemented for sliding window tokenization."
+        )
 
     # The convention in BERT is:
     # (a) For sequence pairs:
@@ -233,11 +243,15 @@ def convert_example_to_feature_sliding_window(
         padding_length = max_seq_length - len(input_ids)
         if pad_on_left:
             input_ids = ([pad_token] * padding_length) + input_ids
-            input_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + input_mask
+            input_mask = (
+                [0 if mask_padding_with_zero else 1] * padding_length
+            ) + input_mask
             segment_ids = ([pad_token_segment_id] * padding_length) + segment_ids
         else:
             input_ids = input_ids + ([pad_token] * padding_length)
-            input_mask = input_mask + ([0 if mask_padding_with_zero else 1] * padding_length)
+            input_mask = input_mask + (
+                [0 if mask_padding_with_zero else 1] * padding_length
+            )
             segment_ids = segment_ids + ([pad_token_segment_id] * padding_length)
 
         assert len(input_ids) == max_seq_length
@@ -256,35 +270,36 @@ def convert_example_to_feature_sliding_window(
                 input_ids=input_ids,
                 input_mask=input_mask,
                 segment_ids=segment_ids,
-                label_id=example.label
+                label_id=example.label,
             )
         )
 
     return input_features
 
+
 def convert_examples_to_features(
-        examples,
-        max_seq_length,
-        tokenizer,
-        output_mode,
-        cls_token_at_end=False,
-        sep_token_extra=False,
-        pad_on_left=False,
-        cls_token="[CLS]",
-        sep_token="[SEP]",
-        pad_token=0,
-        sequence_a_segment_id=0,
-        sequence_b_segment_id=1,
-        cls_token_segment_id=1,
-        pad_token_segment_id=0,
-        mask_padding_with_zero=True,
-        process_count=cpu_count() - 2,
-        multi_label=False,
-        silent=False,
-        use_multiprocessing=True,
-        sliding_window=False,
-        stride=False
-    ):
+    examples,
+    max_seq_length,
+    tokenizer,
+    output_mode,
+    cls_token_at_end=False,
+    sep_token_extra=False,
+    pad_on_left=False,
+    cls_token="[CLS]",
+    sep_token="[SEP]",
+    pad_token=0,
+    sequence_a_segment_id=0,
+    sequence_b_segment_id=1,
+    cls_token_segment_id=1,
+    pad_token_segment_id=0,
+    mask_padding_with_zero=True,
+    process_count=cpu_count() - 2,
+    multi_label=False,
+    silent=False,
+    use_multiprocessing=True,
+    sliding_window=False,
+    stride=False,
+):
     """ Loads a data file into a list of `InputBatch`s
         `cls_token_at_end` define the location of the CLS token:
             - False (Default, BERT/XLM pattern): [CLS] + A + [SEP] + B + [SEP]
@@ -295,23 +310,79 @@ def convert_examples_to_features(
     if sliding_window:
         if not stride:
             stride = 0.9
-        examples = [(example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label, stride) for example in examples]
+        examples = [
+            (
+                example,
+                max_seq_length,
+                tokenizer,
+                output_mode,
+                cls_token_at_end,
+                cls_token,
+                sep_token,
+                cls_token_segment_id,
+                pad_on_left,
+                pad_token_segment_id,
+                sep_token_extra,
+                multi_label,
+                stride,
+            )
+            for example in examples
+        ]
 
         if use_multiprocessing:
             with Pool(process_count) as p:
-                features = list(tqdm(p.imap(convert_example_to_feature_sliding_window, examples, chunksize=500), total=len(examples), disable=silent))
+                features = list(
+                    tqdm(
+                        p.imap(
+                            convert_example_to_feature_sliding_window,
+                            examples,
+                            chunksize=500,
+                        ),
+                        total=len(examples),
+                        disable=silent,
+                    )
+                )
         else:
-            features = [convert_example_to_feature_sliding_window(example) for example in tqdm(examples, disable=silent)]
+            features = [
+                convert_example_to_feature_sliding_window(example)
+                for example in tqdm(examples, disable=silent)
+            ]
     else:
-        examples = [(example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label) for example in examples]
+        examples = [
+            (
+                example,
+                max_seq_length,
+                tokenizer,
+                output_mode,
+                cls_token_at_end,
+                cls_token,
+                sep_token,
+                cls_token_segment_id,
+                pad_on_left,
+                pad_token_segment_id,
+                sep_token_extra,
+                multi_label,
+            )
+            for example in examples
+        ]
 
         if use_multiprocessing:
             with Pool(process_count) as p:
-                features = list(tqdm(p.imap(convert_example_to_feature, examples, chunksize=500), total=len(examples), disable=silent))
+                features = list(
+                    tqdm(
+                        p.imap(convert_example_to_feature, examples, chunksize=500),
+                        total=len(examples),
+                        disable=silent,
+                    )
+                )
         else:
-            features = [convert_example_to_feature(example) for example in tqdm(examples, disable=silent)]
+            features = [
+                convert_example_to_feature(example)
+                for example in tqdm(examples, disable=silent)
+            ]
 
     return features
+
 
 def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     """Truncates a sequence pair in place to the maximum length."""

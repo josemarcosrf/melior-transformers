@@ -15,23 +15,16 @@
 # limitations under the License.
 """ BERT classification fine-tuning: utilities to work with GLUE tasks """
 
-from __future__ import absolute_import, division, print_function
+# from __future__ import absolute_import, division, print_function
 
 import csv
 import json
-import logging
 import os
-import sys
-from io import open
+import shutil
 from multiprocessing import Pool, cpu_count
 
-from scipy.stats import pearsonr, spearmanr
-from sklearn.metrics import matthews_corrcoef, f1_score
-
 from tqdm.auto import tqdm
-import shutil
 
-logger = logging.getLogger(__name__)
 csv.field_size_limit(2147483647)
 
 
@@ -76,9 +69,23 @@ def convert_example_to_feature(
     cls_token_segment_id=1,
     pad_token_segment_id=0,
     mask_padding_with_zero=True,
-    sep_token_extra=False
+    sep_token_extra=False,
 ):
-    example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label, stride = example_row
+    (
+        example,
+        max_seq_length,
+        tokenizer,
+        output_mode,
+        cls_token_at_end,
+        cls_token,
+        sep_token,
+        cls_token_segment_id,
+        pad_on_left,
+        pad_token_segment_id,
+        sep_token_extra,
+        multi_label,
+        stride,
+    ) = example_row
 
     tokens_a = tokenizer.tokenize(example.text_a)
 
@@ -160,8 +167,8 @@ def convert_example_to_feature(
     # else:
     #     raise KeyError(output_mode)
 
-    if output_mode == 'regressioin':
-        label_id = float(example.label)
+    if output_mode == "regression":
+        label_id = float(example.label)  # noqa: ignore flake8
 
     return InputFeatures(
         input_ids=input_ids,
@@ -181,7 +188,21 @@ def convert_example_to_feature_sliding_window(
     mask_padding_with_zero=True,
     sep_token_extra=False,
 ):
-    example, max_seq_length, tokenizer, output_mode, cls_token_at_end, cls_token, sep_token, cls_token_segment_id, pad_on_left, pad_token_segment_id, sep_token_extra, multi_label, stride = example_row
+    (
+        example,
+        max_seq_length,
+        tokenizer,
+        output_mode,
+        cls_token_at_end,
+        cls_token,
+        sep_token,
+        cls_token_segment_id,
+        pad_on_left,
+        pad_token_segment_id,
+        sep_token_extra,
+        multi_label,
+        stride,
+    ) = example_row
 
     if stride < 1:
         stride = int(max_seq_length * stride)
@@ -191,7 +212,6 @@ def convert_example_to_feature_sliding_window(
 
     tokens_a = tokenizer.tokenize(example.text_a)
 
-    special_tokens_count = 3 if sep_token_extra else 2
     if len(tokens_a) > bucket_size:
         token_sets = [
             tokens_a[i : i + bucket_size] for i in range(0, len(tokens_a), stride)
@@ -307,7 +327,8 @@ def convert_examples_to_features(
         `cls_token_at_end` define the location of the CLS token:
             - False (Default, BERT/XLM pattern): [CLS] + A + [SEP] + B + [SEP]
             - True (XLNet/GPT pattern): A + [SEP] + B + [SEP] + [CLS]
-        `cls_token_segment_id` define the segment id associated to the CLS token (0 for BERT, 2 for XLNet)
+        `cls_token_segment_id` define the segment id associated to the CLS token
+        (0 for BERT, 2 for XLNet)
     """
 
     examples = [
@@ -417,18 +438,18 @@ def update_results_file(results, results_path, output_dir_current):
     write_json(results_path, dicc)
 
 
-def delete_worst_models(args, results_path):  
+def delete_worst_models(args, results_path):
     results_list = []
     results_dict = read_json(results_path)
-    # Save to list 
+    # Save to list
     for result in results_dict.keys():
         metric_val = results_dict[result][args["metric_criteria"]]
-        results_list.append([result,metric_val])
+        results_list.append([result, metric_val])
     print(results_list)
     # Sort results
-    results_list.sort(key=lambda x: x[1],reverse=True)
+    results_list.sort(key=lambda x: x[1], reverse=True)
     # Delete worst epochs
-    for item in results_list[int(args["save_n_best_epochs"]):]:
-        epoch_path= os.path.join(args["output_dir"],item[0])
+    for item in results_list[int(args["save_n_best_epochs"]) :]:
+        epoch_path = os.path.join(args["output_dir"], item[0])
         if os.path.exists(epoch_path):
             shutil.rmtree(epoch_path)

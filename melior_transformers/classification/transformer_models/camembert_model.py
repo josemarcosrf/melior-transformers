@@ -1,8 +1,16 @@
-from transformers.modeling_camembert import CamembertModel, CamembertConfig, CAMEMBERT_PRETRAINED_MODEL_ARCHIVE_MAP
-from transformers.modeling_roberta import RobertaForSequenceClassification, RobertaClassificationHead
 import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss, MSELoss
+from transformers.modeling_camembert import (
+    CAMEMBERT_PRETRAINED_MODEL_ARCHIVE_MAP,
+    CamembertConfig,
+    CamembertModel,
+)
+from transformers.modeling_roberta import (
+    RobertaClassificationHead,
+    RobertaForSequenceClassification,
+)
+
 
 class CamembertForSequenceClassification(RobertaForSequenceClassification):
     r"""
@@ -43,13 +51,22 @@ class CamembertForSequenceClassification(RobertaForSequenceClassification):
         self.classifier = RobertaClassificationHead(config)
         self.weight = weight
 
-    def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None, head_mask=None,
-                labels=None):
-        outputs = self.camembert(input_ids,
-                               attention_mask=attention_mask,
-                               token_type_ids=token_type_ids,
-                               position_ids=position_ids,
-                               head_mask=head_mask)
+    def forward(
+        self,
+        input_ids=None,
+        attention_mask=None,
+        token_type_ids=None,
+        position_ids=None,
+        head_mask=None,
+        labels=None,
+    ):
+        outputs = self.camembert(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+        )
         sequence_output = outputs[0]
         logits = self.classifier(sequence_output)
 
