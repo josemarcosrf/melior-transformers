@@ -1,6 +1,5 @@
 from multiprocessing import cpu_count
 
-
 global_args = {
     "output_dir": "outputs/",
     "cache_dir": "cache_dir/",

@@ -1,58 +1,51 @@
 from __future__ import absolute_import, division, print_function
 
-import os
-import math
 import json
+import math
+import os
 import random
 import warnings
 from multiprocessing import cpu_count
 
-import torch
 import numpy as np
 import pandas as pd
-
+import torch
+import wandb
 from scipy.stats import pearsonr
-from seqeval.metrics import precision_score, recall_score, f1_score
+from seqeval.metrics import f1_score, precision_score, recall_score
 from tensorboardX import SummaryWriter
-from tqdm.auto import trange, tqdm
-
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-
-from transformers import AdamW, get_linear_schedule_with_warmup
+from tqdm.auto import tqdm, trange
 from transformers import (
     WEIGHTS_NAME,
+    AdamW,
     BertConfig,
     BertForTokenClassification,
     BertTokenizer,
-)
-from transformers import (
-    DistilBertConfig,
-    DistilBertForTokenClassification,
-    DistilBertTokenizer,
-)
-from transformers import RobertaConfig, RobertaForTokenClassification, RobertaTokenizer
-from transformers import (
-    XLMRobertaConfig,
-    XLMRobertaForTokenClassification,
-    XLMRobertaTokenizer,
-)
-
-from melior_transformers.ner.ner_utils import (
-    InputExample,
-    convert_examples_to_features,
-    get_labels,
-    read_examples_from_file,
-    get_examples_from_df,
-)
-from transformers import (
     CamembertConfig,
     CamembertForTokenClassification,
     CamembertTokenizer,
+    DistilBertConfig,
+    DistilBertForTokenClassification,
+    DistilBertTokenizer,
+    RobertaConfig,
+    RobertaForTokenClassification,
+    RobertaTokenizer,
+    XLMRobertaConfig,
+    XLMRobertaForTokenClassification,
+    XLMRobertaTokenizer,
+    get_linear_schedule_with_warmup,
 )
-from melior_transformers.config.global_args import global_args
 
-import wandb
+from melior_transformers.config.global_args import global_args
+from melior_transformers.ner.ner_utils import (
+    InputExample,
+    convert_examples_to_features,
+    get_examples_from_df,
+    get_labels,
+    read_examples_from_file,
+)
 
 
 class NERModel:

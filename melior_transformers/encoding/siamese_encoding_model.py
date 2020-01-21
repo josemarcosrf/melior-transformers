@@ -1,17 +1,16 @@
 import logging
+from typing import List
 
 from numpy import ndarray
 
-from sentence_transformers import SentenceTransformer
-from typing import List
 from melior_transformers.encoding.constants import (
-    VALID_MODEL_TYPES,
-    VALID_MODEL_SIZE,
     VALID_DATASET_NAMES,
-    VALID_POOLING_TYPES,
     VALID_MODEL_NAMES,
+    VALID_MODEL_SIZE,
+    VALID_MODEL_TYPES,
+    VALID_POOLING_TYPES,
 )
-
+from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 

@@ -17,13 +17,13 @@
 
 # from __future__ import absolute_import, division, print_function
 
-import os
 import csv
 import json
+import os
 import shutil
+from multiprocessing import Pool, cpu_count
 
 from tqdm.auto import tqdm
-from multiprocessing import Pool, cpu_count
 
 csv.field_size_limit(2147483647)
 

@@ -11,12 +11,16 @@ clean:
 formatter:
 	black melior_transformers tests \
 		--exclude melior_transformers/experimental\|melior_transformers/classification/transformer_models\|melior_transformers/custom_models
+	isort --recursive melior_transformers examples tests
+		
 
 lint: clean
 	flake8 melior_transformers tests \
 		--exclude=melior_transformers/experimental,melior_transformers/classification/transformer_models,melior_transformers/custom_models
 	black --check melior_transformers tests \
 		--exclude melior_transformers/experimental\|melior_transformers/classification/transformer_models\|melior_transformers/custom_models
+	isort --recursive melior_transformers examples tests --check
+	
 
 types:
 	pytype --keep-going melior_transformers --exclude melior_transformers/experimental melior_transformers/classification/transformer_models melior_transformers/custom_models

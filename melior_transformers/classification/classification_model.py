@@ -4,54 +4,49 @@
 
 # from __future__ import absolute_import, division, print_function
 
-import os
 import math
+import os
 import warnings
 
-
-import torch
 import numpy as np
 import pandas as pd
-
+import torch
+import wandb
 from scipy.stats import mode
 from sklearn.metrics import (
-    matthews_corrcoef,
     confusion_matrix,
     label_ranking_average_precision_score,
+    matthews_corrcoef,
 )
 from tensorboardX import SummaryWriter
-from tqdm.auto import trange, tqdm
-
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-
-from transformers import AdamW, get_linear_schedule_with_warmup
+from tqdm.auto import tqdm, trange
 from transformers import (
-    BertConfig,
-    BertTokenizer,
-    XLNetConfig,
-    XLNetTokenizer,
-    XLMConfig,
-    XLMTokenizer,
-    RobertaConfig,
-    RobertaTokenizer,
-    DistilBertConfig,
-    DistilBertTokenizer,
+    AdamW,
     AlbertConfig,
     AlbertTokenizer,
+    BertConfig,
+    BertTokenizer,
     CamembertConfig,
     CamembertTokenizer,
+    DistilBertConfig,
+    DistilBertTokenizer,
+    RobertaConfig,
+    RobertaTokenizer,
+    XLMConfig,
     XLMRobertaConfig,
     XLMRobertaTokenizer,
+    XLMTokenizer,
+    XLNetConfig,
+    XLNetTokenizer,
+    get_linear_schedule_with_warmup,
 )
 
 from melior_transformers.classification.classification_utils import (
     InputExample,
     convert_examples_to_features,
 )
-
 from melior_transformers.config.global_args import global_args
-
-import wandb
 
 
 class ClassificationModel:

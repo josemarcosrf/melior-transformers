@@ -1,23 +1,21 @@
 from __future__ import absolute_import, division, print_function
 
+import collections
 import json
 import logging
 import math
-import collections
-from io import open
+import os
 import re
 import string
-
-from tqdm import tqdm, trange
-import os
-import torch
-from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-
-from transformers.tokenization_bert import BasicTokenizer, whitespace_tokenize
+from io import open
 from pprint import pprint
 
-from transformers import AdamW, get_linear_schedule_with_warmup
+import torch
 from tensorboardX import SummaryWriter
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
+from tqdm import tqdm, trange
+from transformers import AdamW, get_linear_schedule_with_warmup
+from transformers.tokenization_bert import BasicTokenizer, whitespace_tokenize
 
 logger = logging.getLogger(__name__)
 

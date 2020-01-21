@@ -1,6 +1,6 @@
-from melior_transformers.ner import NERModel
 import pandas as pd
 
+from melior_transformers.ner import NERModel
 
 # Creating train_df  and eval_df for demonstration
 train_data = [

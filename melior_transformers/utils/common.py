@@ -1,7 +1,7 @@
-import os
 import logging
+import os
 
-from melior_transformers.constants import ENV_LOG_LEVEL, DEFAULT_LOG_LEVEL
+from melior_transformers.constants import DEFAULT_LOG_LEVEL, ENV_LOG_LEVEL
 
 
 def configure_colored_logging(loglevel=None):

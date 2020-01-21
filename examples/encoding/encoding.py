@@ -1,5 +1,6 @@
-from melior_transformers.encoding.encoding_model import SentenceEncoder
 import scipy
+
+from melior_transformers.encoding.encoding_model import SentenceEncoder
 
 se = SentenceEncoder()
 

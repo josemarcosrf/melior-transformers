@@ -1,64 +1,60 @@
 from __future__ import absolute_import, division, print_function
 
-import os
-import math
 import json
+import math
+import os
 import random
-
 from multiprocessing import cpu_count
 
-import torch
 import numpy as np
 import pandas as pd
-
+import torch
+import wandb
 from scipy.stats import pearsonr
 from sklearn.metrics import (
-    mean_squared_error,
-    matthews_corrcoef,
     confusion_matrix,
     label_ranking_average_precision_score,
+    matthews_corrcoef,
+    mean_squared_error,
 )
 from tensorboardX import SummaryWriter
-from tqdm.auto import trange, tqdm
-
-from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
-
-from transformers import AdamW, get_linear_schedule_with_warmup
+from torch.utils.data.distributed import DistributedSampler
+from tqdm.auto import tqdm, trange
 from transformers import (
     WEIGHTS_NAME,
+    AdamW,
+    AlbertConfig,
+    AlbertForQuestionAnswering,
+    AlbertTokenizer,
     BertConfig,
     BertForQuestionAnswering,
     BertTokenizer,
+    DistilBertConfig,
+    DistilBertForQuestionAnswering,
+    DistilBertTokenizer,
     XLMConfig,
     XLMForQuestionAnswering,
     XLMTokenizer,
     XLNetConfig,
     XLNetForQuestionAnswering,
     XLNetTokenizer,
-    DistilBertConfig,
-    DistilBertForQuestionAnswering,
-    DistilBertTokenizer,
-    AlbertConfig,
-    AlbertForQuestionAnswering,
-    AlbertTokenizer,
+    get_linear_schedule_with_warmup,
 )
 
+from melior_transformers.config.global_args import global_args
 from melior_transformers.question_answering.question_answering_utils import (
-    get_examples,
-    convert_examples_to_features,
     RawResult,
-    write_predictions,
     RawResultExtended,
-    write_predictions_extended,
-    to_list,
     build_examples,
+    convert_examples_to_features,
     get_best_predictions,
     get_best_predictions_extended,
+    get_examples,
+    to_list,
+    write_predictions,
+    write_predictions_extended,
 )
-from melior_transformers.config.global_args import global_args
-
-import wandb
 
 
 class QuestionAnsweringModel:

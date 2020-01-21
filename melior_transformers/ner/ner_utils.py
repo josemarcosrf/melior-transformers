@@ -19,6 +19,7 @@ from __future__ import absolute_import, division, print_function
 
 from io import open
 from multiprocessing import Pool, cpu_count
+
 from tqdm.auto import tqdm
 
 

@@ -1,12 +1,11 @@
 import logging
+from typing import Dict, List
 
 from numpy import ndarray
 
-from sentence_transformers import SentenceTransformer, models
 from melior_transformers.config.global_args import global_args
-from typing import List, Dict
 from melior_transformers.encoding.constants import MODEL_CLASSES
-
+from sentence_transformers import SentenceTransformer, models
 
 logger = logging.getLogger(__name__)
 

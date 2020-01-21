@@ -1,7 +1,7 @@
-from melior_transformers.question_answering import QuestionAnsweringModel
 import json
 import os
 
+from melior_transformers.question_answering import QuestionAnsweringModel
 
 # Create dummy data to use for training.
 train_data = [

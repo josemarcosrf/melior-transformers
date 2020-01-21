@@ -1,5 +1,6 @@
-from melior_transformers.ner import NERModel
 import pandas as pd
+
+from melior_transformers.ner import NERModel
 
 
 def test_named_entity_recognition():

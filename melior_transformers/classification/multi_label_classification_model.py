@@ -1,30 +1,29 @@
 import torch
-
-from melior_transformers.classification import ClassificationModel
-from melior_transformers.custom_models.models import (
-    BertForMultiLabelSequenceClassification,
-    RobertaForMultiLabelSequenceClassification,
-    XLNetForMultiLabelSequenceClassification,
-    XLMForMultiLabelSequenceClassification,
-    DistilBertForMultiLabelSequenceClassification,
-    AlbertForMultiLabelSequenceClassification,
-)
-from melior_transformers.config.global_args import global_args
-
 from transformers import (
     WEIGHTS_NAME,
-    BertConfig,
-    BertTokenizer,
-    XLNetConfig,
-    XLNetTokenizer,
-    XLMConfig,
-    XLMTokenizer,
-    RobertaConfig,
-    RobertaTokenizer,
-    DistilBertConfig,
-    DistilBertTokenizer,
     AlbertConfig,
     AlbertTokenizer,
+    BertConfig,
+    BertTokenizer,
+    DistilBertConfig,
+    DistilBertTokenizer,
+    RobertaConfig,
+    RobertaTokenizer,
+    XLMConfig,
+    XLMTokenizer,
+    XLNetConfig,
+    XLNetTokenizer,
+)
+
+from melior_transformers.classification import ClassificationModel
+from melior_transformers.config.global_args import global_args
+from melior_transformers.custom_models.models import (
+    AlbertForMultiLabelSequenceClassification,
+    BertForMultiLabelSequenceClassification,
+    DistilBertForMultiLabelSequenceClassification,
+    RobertaForMultiLabelSequenceClassification,
+    XLMForMultiLabelSequenceClassification,
+    XLNetForMultiLabelSequenceClassification,
 )
 
 

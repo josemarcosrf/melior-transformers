@@ -1,6 +1,7 @@
-import pytest
 import json
 import os
+
+import pytest
 
 from melior_transformers.question_answering import QuestionAnsweringModel
 

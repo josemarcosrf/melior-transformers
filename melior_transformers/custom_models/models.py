@@ -1,21 +1,24 @@
 import torch
 from torch import nn
-
-from transformers import BertPreTrainedModel, BertModel
-from transformers import XLNetPreTrainedModel, XLNetModel
-from transformers import XLMPreTrainedModel, XLMModel
-from transformers import DistilBertModel
+from torch.nn import BCEWithLogitsLoss
+from transformers import (
+    BertModel,
+    BertPreTrainedModel,
+    DistilBertModel,
+    RobertaModel,
+    XLMModel,
+    XLMPreTrainedModel,
+    XLNetModel,
+    XLNetPreTrainedModel,
+)
 from transformers.configuration_distilbert import DistilBertConfig
-from transformers.modeling_utils import SequenceSummary, PreTrainedModel
-from transformers import RobertaModel
 from transformers.configuration_roberta import RobertaConfig
-
 from transformers.modeling_albert import (
     AlbertConfig,
-    AlbertPreTrainedModel,
     AlbertModel,
+    AlbertPreTrainedModel,
 )
-
+from transformers.modeling_utils import PreTrainedModel, SequenceSummary
 
 ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP = {
     "roberta-base": "https://s3.amazonaws.com/models.huggingface.co/bert/roberta-base-pytorch_model.bin",
@@ -29,7 +32,6 @@ DISTILBERT_PRETRAINED_MODEL_ARCHIVE_MAP = {
     "distilbert-base-uncased-distilled-squad": "https://s3.amazonaws.com/models.huggingface.co/bert/distilbert-base-uncased-distilled-squad-pytorch_model.bin",
 }
 
-from torch.nn import BCEWithLogitsLoss
 
 
 class BertForMultiLabelSequenceClassification(BertPreTrainedModel):
