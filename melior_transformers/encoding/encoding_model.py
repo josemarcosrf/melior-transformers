@@ -2,66 +2,114 @@ import logging
 
 from numpy import ndarray
 
-from sentence_transformers import SentenceTransformer
-from typing import List
+from sentence_transformers import SentenceTransformer, models
+from melior_transformers.config.global_args import global_args
+from typing import List, Dict
+from melior_transformers.encoding.constants import MODEL_CLASSES
 
 
 logger = logging.getLogger(__name__)
 
 
 class SentenceEncoder:
-
     """ Simple wrapper class around 'sentence-transformers':
-     (https://github.com/UKPLab/sentence-transformers/)
+     (https://github.com/UKPLab/sentence-transformers/) that
+     allow us to easly-extract embeddings from pre-trained models.
 
-    For now only allows to use pre-trained models.
-
-    Eventually fine-tunning should be possible in a similar fashion
-    as all the other transformer-tasks
+     You can find the full list of models here:
+     https://huggingface.co/transformers/pretrained_models.html
     """
-
-    VALID_MODEL_NAMES = ["bert", "roberta", "distilbert"]
-    VALID_MODEL_SIZE = ["base", "large"]
-    VALID_DATASET_NAMES = ["nli", "nli-stsb"]
-    VALID_POOLING_TYPES = ["max-tokens", "mean-tokens", "cls-token"]
 
     def __init__(
         self,
-        model_name: str = "bert",
-        model_size: str = "base",
-        dataset_name: str = "nli",
-        pooling_type: str = "mean",
+        model_type: str = "bert",
+        model_name: str = "bert-base-uncased",
+        args: Dict = None,
         use_cuda: bool = False,
         cuda_device=-1,
     ):
+
         """
         Initializes a pre-trained Transformer model for Sentence Encoding.
 
         Args:
-            model_name (optional): The type of model (bert, roberta, distilbert)
-            model_size (optional): The model size (base, large).
-            dataset_name (optional): Dataset of the pre-training (nli, nli-stsb).
-            pooling_type (optional): Pooling strategy (max, mean).
+            model_type (optional): The type of model.
+            model_size (optional): The model name.
+            args (optional): Aditional arguments to configure embeddigs extraction.
             use_cuda (optional): Use GPU if available. Setting to False will
              force model to use CPU only.
             cuda_device (optional): Specific GPU that should be used.
              Will use the first available GPU by default.
+        Returns:
+            None
         """
-        # TODO: Check all parameters are valid before trying to load the model
 
-        self.model_name = (
-            f"{model_name}-{model_size}-{dataset_name}-{pooling_type}-tokens"
-        )
+        self.args = {
+            # Model config
+            "max_seq_length": 128,
+            "do_lower_case": False,
+            # Model config
+            "pooling_mode_mean_tokens": True,
+            "pooling_mode_cls_token": False,
+            "pooling_mode_max_tokens": False,
+            "pooling_mode_mean_sqrt_len_tokens": False,
+        }
+
+        if args is not None:
+            self.args.update(args)
+
+        if model_type not in MODEL_CLASSES:
+            raise ValueError(
+                f"Model type {model_type} doesn't exist."
+                f"\nPlease select one of the follwing: {MODEL_CLASSES.keys()}"
+            )
 
         try:
-            logger.info(f"Loading model '{self.model_name}'")
-            self.model = SentenceTransformer(self.model_name)
+            logger.info(f"Loading model '{model_name}'")
+
+            word_embedding_model = MODEL_CLASSES[model_type](
+                model_name_or_path=model_name,
+                max_seq_length=self.args["max_seq_length"],
+                do_lower_case=self.args["do_lower_case"],
+            )
+
+            pooling_model = models.Pooling(
+                word_embedding_model.get_word_embedding_dimension(),
+                pooling_mode_mean_tokens=self.args["pooling_mode_mean_tokens"],
+                pooling_mode_cls_token=self.args["pooling_mode_cls_token"],
+                pooling_mode_max_tokens=self.args["pooling_mode_max_tokens"],
+                pooling_mode_mean_sqrt_len_tokens=self.args[
+                    "pooling_mode_mean_sqrt_len_tokens"
+                ],
+            )
+
+            self.encoder_model = SentenceTransformer(
+                modules=[word_embedding_model, pooling_model],
+            )
         except Exception as e:
-            logger.error(f"Error loading model: {e}")
+            raise ValueError(f"Error loading model: {e}")
 
     def encode(
         self, sentences: List[str], batch_size: int = 8, show_progress_bar: bool = False
     ) -> List[ndarray]:
-        return self.model.encode(
+        """
+        Extract sentence embeddings from the selected model.
+
+        Args:
+            sentences: List of sentences to extract embeddings.
+            batch_size (optional): Batch size used for the computation
+            show_progress_bar (optional): Output a progress bar when encode sentences
+        Returns:
+           List with ndarrays of the embeddings for each sentence.
+        """
+
+        return self.encoder_model.encode(
             sentences, batch_size=batch_size, show_progress_bar=show_progress_bar
         )
+
+
+if __name__ == "__main__":
+    se = SentenceEncoder("bert", "bert-base-uncased", args={"max_seq_length": 1024})
+    sentences = se.encode(["How are you?", "Are you ok?"],)
+    print(sentences[0].size)
+    print(sentences[1].size)

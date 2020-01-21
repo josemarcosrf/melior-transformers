@@ -15,7 +15,8 @@ formatter:
 lint: clean
 	flake8 melior_transformers tests \
 		--exclude=melior_transformers/experimental,melior_transformers/classification/transformer_models,melior_transformers/custom_models
-	black --check melior_transformers tests --exclude melior_transformers/experimental\|melior_transformers/classification/transformer_models\|melior_transformers/custom_models
+	black --check melior_transformers tests \
+		--exclude melior_transformers/experimental\|melior_transformers/classification/transformer_models\|melior_transformers/custom_models
 
 types:
 	pytype --keep-going melior_transformers --exclude melior_transformers/experimental melior_transformers/classification/transformer_models melior_transformers/custom_models
