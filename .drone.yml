@@ -1,32 +1,47 @@
-# See more options at https://digitalocean-runner.docs.drone.io/configuration/overview/
-
 kind: pipeline
-name: digitalocean-melior-transformers
-type: digitalocean
+type: docker
+name: docker-melior-transformers
 
-token:
-  # organization secret set by terraform
-  from_secret: digital_ocean_token
+platform:
+  os: linux
+  arch: amd64
 
-# digital ocean droplet configuration
-server:
-  image: 55827312
-  size: m-16gb
-  region: lon1
 
 steps:
-  - name: install
-    commands:
-      - make install
+- name: install_and_run
+  # image: python:${PYTHON_VERSION}-slim
+  # image: ubuntu:bionic
+  image: python:3.6-slim
+  pull: if-not-exists
+  commands:
+    # Install all libs in the docker
+    - |
+      apt-get update -qq && \
+      apt-get install -y --no-install-recommends \
+      build-essential \
+      sudo \
+      wget \
+      unzip \
+      openssh-client \
+      graphviz-dev \
+      pkg-config \
+      git-core \
+      openssl \
+      libssl-dev \
+      libffi6 \
+      libffi-dev \
+      libpng-dev \
+      libpq-dev \
+      curl && \
+      apt-get clean && \
+      rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    # Install MAI dependencies
+    - python -m pip install -U pip==19.3.1
+    - make install
+    # job: Code Formatting
+    - make lint
+    # job: Type Check
+    # - make types
+    # Test
+    - make test
 
-  - name: lint
-    commands:
-      - make lint
-
-  # - name: types
-  #   commands:
-  #     - make types
-
-  - name: test
-    commands:
-      - make test
