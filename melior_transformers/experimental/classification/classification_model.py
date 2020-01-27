@@ -25,25 +25,6 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 from tqdm.auto import tqdm, trange
-from transformers import (
-    WEIGHTS_NAME,
-    AdamW,
-    AlbertConfig,
-    AlbertTokenizer,
-    BertConfig,
-    BertTokenizer,
-    CamembertConfig,
-    CamembertTokenizer,
-    DistilBertConfig,
-    DistilBertTokenizer,
-    RobertaConfig,
-    RobertaTokenizer,
-    XLMConfig,
-    XLMTokenizer,
-    XLNetConfig,
-    XLNetTokenizer,
-    get_linear_schedule_with_warmup,
-)
 
 from melior_transformers.experimental.classification.classification_utils import (
     InputExample,
@@ -69,6 +50,25 @@ from melior_transformers.experimental.classification.transformer_models.xlm_mode
 )
 from melior_transformers.experimental.classification.transformer_models.xlnet_model import (
     XLNetForSequenceClassification,
+)
+from transformers import (
+    WEIGHTS_NAME,
+    AdamW,
+    AlbertConfig,
+    AlbertTokenizer,
+    BertConfig,
+    BertTokenizer,
+    CamembertConfig,
+    CamembertTokenizer,
+    DistilBertConfig,
+    DistilBertTokenizer,
+    RobertaConfig,
+    RobertaTokenizer,
+    XLMConfig,
+    XLMTokenizer,
+    XLNetConfig,
+    XLNetTokenizer,
+    get_linear_schedule_with_warmup,
 )
 
 

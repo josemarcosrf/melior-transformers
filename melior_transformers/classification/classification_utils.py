@@ -21,6 +21,7 @@ import csv
 import json
 import os
 import shutil
+import stat
 from multiprocessing import Pool, cpu_count
 
 from tqdm.auto import tqdm
@@ -438,6 +439,12 @@ def update_results_file(results, results_path, output_dir_current):
     write_json(results_path, dicc)
 
 
+# shutil.rmtree helper to remove readonly files
+def del_rw(action, name, exc):
+    os.chmod(name, stat.S_IWRITE)
+    os.remove(name)
+
+
 def delete_worst_models(args, results_path):
     results_list = []
     results_dict = read_json(results_path)
@@ -452,4 +459,7 @@ def delete_worst_models(args, results_path):
     for item in results_list[int(args["save_n_best_epochs"]) :]:
         epoch_path = os.path.join(args["output_dir"], item[0])
         if os.path.exists(epoch_path):
-            shutil.rmtree(epoch_path)
+            try:
+                shutil.rmtree(epoch_path, onerror=del_rw)
+            except Exception as e:
+                print(f"Error when removing {epoch_path}. \n {e}")
