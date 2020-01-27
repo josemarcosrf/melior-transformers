@@ -21,20 +21,6 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 from tqdm.auto import tqdm, trange
-
-from melior_transformers.config.global_args import global_args
-from melior_transformers.question_answering.question_answering_utils import (
-    RawResult,
-    RawResultExtended,
-    build_examples,
-    convert_examples_to_features,
-    get_best_predictions,
-    get_best_predictions_extended,
-    get_examples,
-    to_list,
-    write_predictions,
-    write_predictions_extended,
-)
 from transformers import (
     WEIGHTS_NAME,
     AdamW,
@@ -54,6 +40,20 @@ from transformers import (
     XLNetForQuestionAnswering,
     XLNetTokenizer,
     get_linear_schedule_with_warmup,
+)
+
+from melior_transformers.config.global_args import global_args
+from melior_transformers.question_answering.question_answering_utils import (
+    RawResult,
+    RawResultExtended,
+    build_examples,
+    convert_examples_to_features,
+    get_best_predictions,
+    get_best_predictions_extended,
+    get_examples,
+    to_list,
+    write_predictions,
+    write_predictions_extended,
 )
 
 

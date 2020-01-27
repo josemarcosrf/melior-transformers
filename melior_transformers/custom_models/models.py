@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 from torch.nn import BCEWithLogitsLoss
-
 from transformers import (
     BertModel,
     BertPreTrainedModel,

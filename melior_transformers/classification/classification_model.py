@@ -25,14 +25,6 @@ from sklearn.metrics import (
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from tqdm.auto import tqdm, trange
-
-from melior_transformers.classification.classification_utils import (
-    InputExample,
-    convert_examples_to_features,
-    delete_worst_models,
-    update_results_file,
-)
-from melior_transformers.config.global_args import global_args
 from transformers import (
     AdamW,
     AlbertConfig,
@@ -53,6 +45,14 @@ from transformers import (
     XLNetTokenizer,
     get_linear_schedule_with_warmup,
 )
+
+from melior_transformers.classification.classification_utils import (
+    InputExample,
+    convert_examples_to_features,
+    delete_worst_models,
+    update_results_file,
+)
+from melior_transformers.config.global_args import global_args
 
 
 class ClassificationModel:

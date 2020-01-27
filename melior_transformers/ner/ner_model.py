@@ -17,15 +17,6 @@ from tensorboardX import SummaryWriter
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from tqdm.auto import tqdm, trange
-
-from melior_transformers.config.global_args import global_args
-from melior_transformers.ner.ner_utils import (
-    InputExample,
-    convert_examples_to_features,
-    get_examples_from_df,
-    get_labels,
-    read_examples_from_file,
-)
 from transformers import (
     WEIGHTS_NAME,
     AdamW,
@@ -45,6 +36,15 @@ from transformers import (
     XLMRobertaForTokenClassification,
     XLMRobertaTokenizer,
     get_linear_schedule_with_warmup,
+)
+
+from melior_transformers.config.global_args import global_args
+from melior_transformers.ner.ner_utils import (
+    InputExample,
+    convert_examples_to_features,
+    get_examples_from_df,
+    get_labels,
+    read_examples_from_file,
 )
 
 
