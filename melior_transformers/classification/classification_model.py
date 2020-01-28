@@ -14,9 +14,13 @@ import torch
 import wandb
 from scipy.stats import mode
 from sklearn.metrics import (
+    accuracy_score,
     confusion_matrix,
+    f1_score,
     label_ranking_average_precision_score,
     matthews_corrcoef,
+    precision_score,
+    recall_score,
 )
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
@@ -45,6 +49,8 @@ from transformers import (
 from melior_transformers.classification.classification_utils import (
     InputExample,
     convert_examples_to_features,
+    delete_worst_models,
+    update_results_file,
 )
 from melior_transformers.config.global_args import global_args
 
@@ -421,6 +427,9 @@ class ClassificationModel:
                         "mcc": [],
                         "train_loss": [],
                         "eval_loss": [],
+                        "acc": [],
+                        "f1": [],
+                        "precision": [],
                         **extra_metrics,
                     }
                 elif self.model.num_labels == 1:
@@ -436,6 +445,9 @@ class ClassificationModel:
                         "mcc": [],
                         "train_loss": [],
                         "eval_loss": [],
+                        "acc": [],
+                        "f1": [],
+                        "precision": [],
                         **extra_metrics,
                     }
 
@@ -607,7 +619,16 @@ class ClassificationModel:
                 report.to_csv(
                     args["output_dir"] + "training_progress_scores.csv", index=False
                 )
-
+                # Save epoch resuls
+                epoch_results_path = os.path.join(
+                    output_dir_current, "eval_results.json"
+                )
+                update_results_file(results, epoch_results_path, output_dir_current)
+                # Update all_results
+                results_path = os.path.join(output_dir, "all_eval_results.json")
+                update_results_file(results, results_path, output_dir_current)
+                if args["save_n_best_epochs"] != 0:
+                    delete_worst_models(args, results_path)
         return global_step, tr_loss / global_step
 
     def eval_model(
@@ -934,13 +955,13 @@ class ClassificationModel:
 
         mcc = matthews_corrcoef(labels, preds)
 
-        # acc = accuracy_score(labels, preds)
-        # precision = precision_score(
-        #     labels, preds, labels=list(set(preds)), average="weighted"
-        # )
-        # f1 = f1_score(labels, preds, labels=list(set(preds)), average="weighted")
+        acc = accuracy_score(labels, preds)
+        precision = precision_score(
+            labels, preds, labels=list(set(preds)), average="weighted"
+        )
+        f1 = f1_score(labels, preds, labels=list(set(preds)), average="weighted")
 
-        # extra_metrics = {"acc": acc, "precision": precision, "f1": f1}
+        extra_metrics = {"acc": acc, "precision": precision, "f1": f1}
 
         if self.model.num_labels == 2:
             tn, fp, fn, tp = confusion_matrix(labels, preds).ravel()
