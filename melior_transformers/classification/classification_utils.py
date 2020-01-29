@@ -460,6 +460,7 @@ def delete_worst_models(args, results_path):
         epoch_path = os.path.join(args["output_dir"], item[0])
         if os.path.exists(epoch_path):
             try:
+                print(f"Removing {epoch_path}.")
                 shutil.rmtree(epoch_path, onerror=del_rw)
             except Exception as e:
                 print(f"Error when removing {epoch_path}. \n {e}")
