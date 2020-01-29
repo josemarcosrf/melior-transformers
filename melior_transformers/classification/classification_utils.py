@@ -452,9 +452,9 @@ def delete_worst_models(args, results_path):
     for result in results_dict.keys():
         metric_val = results_dict[result][args["metric_criteria"]]
         results_list.append([result, metric_val])
-    print(results_list)
     # Sort results
     results_list.sort(key=lambda x: x[1], reverse=True)
+    print(results_list)
     # Delete worst epochs
     for item in results_list[int(args["save_n_best_epochs"]) :]:
         epoch_path = os.path.join(args["output_dir"], item[0])
@@ -464,3 +464,5 @@ def delete_worst_models(args, results_path):
                 shutil.rmtree(epoch_path, onerror=del_rw)
             except Exception as e:
                 print(f"Error when removing {epoch_path}. \n {e}")
+    print("\n")
+    print("\n")
