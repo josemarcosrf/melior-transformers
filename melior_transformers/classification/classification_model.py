@@ -592,12 +592,11 @@ class ClassificationModel:
 
             if (
                 args["save_model_every_epoch"] or args["evaluate_during_training"]
-            ) and not os.path.exists(output_dir_current):
-                os.makedirs(output_dir_current)
+            ):
+                os.makedirs(output_dir_current,exist_ok=True)
 
             if (
                 args["save_model_every_epoch"]
-                and epoch_number != args["num_train_epochs"]
             ):
                 model_to_save = model.module if hasattr(model, "module") else model
                 model_to_save.save_pretrained(output_dir_current)
