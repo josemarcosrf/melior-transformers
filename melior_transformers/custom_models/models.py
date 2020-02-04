@@ -33,7 +33,6 @@ DISTILBERT_PRETRAINED_MODEL_ARCHIVE_MAP = {
 }
 
 
-
 class BertForMultiLabelSequenceClassification(BertPreTrainedModel):
     """
     Bert model adapted for multi-label sequence classification

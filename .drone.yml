@@ -6,6 +6,8 @@ platform:
   os: linux
   arch: amd64
 
+concurrency:
+  limit: 1
 
 steps:
 - name: install_and_run
