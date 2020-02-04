@@ -1,0 +1,33 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.4.0
+    hooks:
+    - id: check-merge-conflict
+    - id: check-added-large-files
+    - id: detect-private-key
+    - id: check-yaml
+    - id: check-json
+
+-   repo: https://github.com/ambv/black
+    rev: stable
+    hooks:
+    - id: black
+      language_version: python3.6
+      exclude: ^melior_transformers/experimental\|^melior_transformers/classification/transformer_models\|^melior_transformers/custom_models
+
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.1
+    hooks:
+    - id: flake8
+      exclude: ^melior_transformers/experimental|^melior_transformers/classification/transformer_models|^melior_transformers/custom_models|^examples
+
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v4.3.21  # Use the revision sha / tag you want to point at
+    hooks:
+    -   id: isort
+
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v1.11.1
+    hooks:
+    -   id: pyupgrade
+
