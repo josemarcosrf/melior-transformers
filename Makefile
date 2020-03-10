@@ -1,7 +1,28 @@
+help:
+	@echo "    install"
+	@echo "        Install core dependencies."
+	@echo "    upload-package"
+	@echo "        Upload package to Melior Pypi server"
+	@echo "    clean"
+	@echo "        Remove Python/build artifacts."
+	@echo "    formatter"
+	@echo "        Apply black formatting to code."
+	@echo "    lint"
+	@echo "        Lint code with flake8, and check if black formatter should be applied."
+	@echo "    types"
+	@echo "        Check for type errors using pytype."
+	@echo "    test"
+	@echo "        Run pytest on tests/."
+	@echo "    check-readme"
+	@echo "        Check if the README can be converted from .md to .rst for PyPI."
+
 install:
-	pip install -e .
-	pip install -r requirements-dev.txt
+	pip install -e .[dev]
 	pip list
+
+upload-package: clean
+	python setup.py sdist
+	twine upload dist/* -r melior
 
 clean:
 	find . -name '*.pyc' -exec rm -f {} +

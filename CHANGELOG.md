@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.2+melior1.1.6] - 2019-03-10
+### Added
+- Makefile to upload package to Melior's Pypi server
+- Drone config to upload package to Melior's Pypi server automatically.
+
+### Changed
+- Setup to include upload, test, dev and extra requires.
+
 ## [0.18.2+melior1.1.5] - 2019-02-04
 ### Added
 - Pre-commit hooks added.
