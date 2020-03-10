@@ -38,7 +38,7 @@ steps:
       apt-get clean && \
       rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
     # Install MAI dependencies
-    - python -m pip install -U pip==19.3.1
+    - python -m pip install -U pip==20.0.2
     - make install
     # job: Code Formatting
     - make lint
@@ -46,4 +46,29 @@ steps:
     # - make types
     # Test
     - make test
-
+- name: pypi_publish
+  # Upload to Melior's pypi package
+  image: python:3.6-slim
+  pull: if-not-exists
+  environment:
+      PYPI_USR:
+        from_secret: pypi_usr
+      PYPI_PWD:
+        from_secret: pypi_pwd
+  commands:
+    # Install all libs in the docker
+    - |
+      apt-get update -qq && \
+      apt-get install -y --no-install-recommends \
+      build-essential && \
+      apt-get clean && \
+      rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    # Install MAI dependencies
+    - python -m pip install -U pip==20.0.2
+    - pip install -e .[upload]
+    # job: Upload to Pypi Server
+    - python setup.py sdist
+    - twine upload dist/* --repository-url https://pypi.melior.ai -u "$${PYPI_USR}" -p "$${PYPI_PWD}"
+  when:
+      event:
+        - tag
