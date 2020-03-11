@@ -19,12 +19,12 @@ upload_requires = [
 
 install_requires = [
     "torch==1.3.1",
-    "tqdm==4.41.1",
+    "tqdm==4.43.0",
     "transformers==2.3.0",
     "numpy==1.16.3",
     "pandas==0.25.3",
     "seqeval==0.0.12",
-    "scipy==1.2.1",
+    "scipy==1.4.1",
     # "apex==0.9.10dev",
     "scikit-learn~=0.20.2",
     "tensorboardX==2.0",
